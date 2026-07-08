@@ -1,0 +1,17 @@
+@import "tailwindcss";
+
+/* 1. DARK MODE (Opcional)
+   Se quiseres controlar o Dark Mode manualmente com um botão adicionando a classe "dark" no <html>.
+   Se apagares esta linha, o Tailwind v4 assume o modo "media" automaticamente (lê a preferência do telemóvel/PC). */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* 2. UTILITÁRIOS CUSTOMIZADOS
+   A nova forma do Tailwind v4 criar utilitários que se comportam como classes nativas. */
+@utility scrollbar-none {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE e Edge */
+  
+  &::-webkit-scrollbar {
+    display: none; /* Chrome, Safari e Opera */
+  }
+}
