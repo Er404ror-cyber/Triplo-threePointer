@@ -1,9 +1,16 @@
 import { useTranslation } from 'react-i18next';
+import { resources } from './translations';
+
+// Configuração visual apenas para o select não ficar dependente do ficheiro de traduções
+const languageMeta = {
+  pt: { name: 'PT', flag: '🇵🇹' },
+  en: { name: 'EN', flag: '🇬🇧' }
+};
 
 export default function LanguageSwitcher() {
   const { i18n } = useTranslation();
 
-  // Proteção: Se o i18n ou i18n.language ainda não existirem, assume 'pt'
+  // Limpa o idioma atual (ex: transforma 'pt-BR' ou 'pt-MZ' em apenas 'pt')
   const currentLanguage = i18n.language ? i18n.language.split('-')[0] : 'pt';
   const isEnglish = currentLanguage === 'en';
 
