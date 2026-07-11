@@ -1,27 +1,61 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import type { Post, PostType } from '../types/database';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabaseClient';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Link } from 'react-router-dom'; // <- Adicionado para navegação
+import { 
+  Link2, UploadCloud, Trash2, FileVideo, Image as ImageIcon, 
+  CheckCircle2, AlertCircle, Plus, X, FileImage
+} from 'lucide-react';
+
+const POST_TYPES: PostType[] = ['post', 'event', 'treino', 'calendar'];
+
+const isValidSocialLink = (url: string) => {
+  try {
+    const parsedUrl = new URL(url);
+    const validDomains = ['youtube.com', 'youtu.be', 'instagram.com', 'tiktok.com', 'facebook.com', 'twitter.com', 'x.com', 'linkedin.com'];
+    return validDomains.some(domain => parsedUrl.hostname.includes(domain));
+  } catch {
+    return false;
+  }
+};
+
+const formatDescription = (text: string) => {
+  return text
+    .trim()
+    .replace(/\n\s*\n\s*\n+/g, '\n\n')
+    .replace(/^ +/gm, ''); 
+};
 
 export default function AdminPublications() {
-  const [posts, setPosts] = useState<Post[]>([]);
+  const { t } = useTranslation();
+  const queryClient = useQueryClient();
+
+  const [isFormOpen, setIsFormOpen] = useState(false);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [type, setType] = useState<PostType>('post');
+  
+  const [mediaSource, setMediaSource] = useState<'upload' | 'link'>('upload');
   const [mediaFile, setMediaFile] = useState<File | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const { t } = useTranslation();
+  const [mediaLink, setMediaLink] = useState('');
+  const [linkError, setLinkError] = useState('');
 
-  useEffect(() => {
-    fetchAdminPosts();
-  }, []);
+  const { data: posts = [], isLoading: isLoadingPosts } = useQuery({
+    queryKey: ['admin-posts'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('posts')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data as Post[];
+    },
+  });
 
-  const fetchAdminPosts = async () => {
-    const { data } = await supabase.from('posts').select('*').order('created_at', { ascending: false });
-    if (data) setPosts(data as Post[]);
-  };
-
-  const handleUploadCloudinary = async (file: File): Promise<{ url: string; mediaType: 'image' | 'video' }> => {
+  const handleUploadCloudinary = async (file: File) => {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('upload_preset', import.meta.env.VITE_CLOUDINARY_PRESET);
@@ -33,95 +67,262 @@ export default function AdminPublications() {
       method: 'POST',
       body: formData
     });
+    
+    if (!res.ok) throw new Error('Falha no upload da mídia');
     const data = await res.json();
     return { url: data.secure_url, mediaType: resourceType };
   };
 
-  const handleCreatePost = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!title || !description || !mediaFile) return alert('Preencha todos os campos');
-    setIsSubmitting(true);
+  const createPostMutation = useMutation({
+    mutationFn: async () => {
+      let finalUrl = '';
+      let finalMediaType = 'link';
 
-    try {
-      const { url, mediaType } = await handleUploadCloudinary(mediaFile);
-      await supabase.from('posts').insert({
+      if (mediaSource === 'upload' && mediaFile) {
+        const { url, mediaType } = await handleUploadCloudinary(mediaFile);
+        finalUrl = url;
+        finalMediaType = mediaType;
+      } else if (mediaSource === 'link' && mediaLink) {
+        finalUrl = mediaLink;
+        finalMediaType = 'link'; 
+      }
+
+      const cleanText = formatDescription(description);
+
+      const { error } = await supabase.from('posts').insert({
         title,
-        description,
+        description: cleanText,
         type,
-        media_url: url,
-        media_type: mediaType
+        media_url: finalUrl,
+        media_type: finalMediaType,
       });
 
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-posts'] });
       setTitle('');
       setDescription('');
       setMediaFile(null);
-      fetchAdminPosts();
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsSubmitting(false);
+      setMediaLink('');
+      setLinkError('');
+      setIsFormOpen(false);
+    },
+    onError: (error) => {
+      alert('Erro ao criar publicação: ' + error.message);
     }
+  });
+
+  const deletePostMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('posts').delete().eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-posts'] }),
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setLinkError('');
+
+    if (mediaSource === 'upload' && !mediaFile) {
+      return alert('Por favor, seleciona um ficheiro.');
+    }
+
+    if (mediaSource === 'link') {
+      if (!isValidSocialLink(mediaLink)) {
+        setLinkError('Insere um link válido do YouTube, Instagram, TikTok, etc.');
+        return;
+      }
+    }
+
+    createPostMutation.mutate();
   };
 
-  const handleDelete = async (id: string) => {
-    if (confirm('Deseja eliminar esta publicação?')) {
-      await supabase.from('posts').delete().eq('id', id);
-      fetchAdminPosts();
+  // Função para evitar que o clique no botão eliminar abra o link
+  const handleDelete = (e: React.MouseEvent, id: string) => {
+    e.preventDefault(); // Impede a navegação do Link
+    e.stopPropagation(); // Impede propagação do evento
+    if (window.confirm('Tens a certeza que desejas eliminar esta publicação?')) {
+      deletePostMutation.mutate(id);
     }
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-      <div className="bg-white p-6 rounded-2xl border shadow-sm h-fit">
-        <h2 className="text-xl font-bold mb-4">{t('actions.newPost')}</h2>
-        <form onSubmit={handleCreatePost} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Título</label>
-            <input type="text" value={title} onChange={e => setTitle(e.target.value)} className="w-full border rounded-xl px-4 py-2" required />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
-            <select value={type} onChange={e => setType(e.target.value as PostType)} className="w-full border rounded-xl px-4 py-2">
-              <option value="post">{t('types.post')}</option>
-              <option value="event">{t('types.event')}</option>
-              <option value="treino">{t('types.treino')}</option>
-              <option value="calendar">{t('types.calendar')}</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Mídia (Imagem/Vídeo)</label>
-            <input type="file" accept="image/*,video/*" onChange={e => setMediaFile(e.target.files?.[0] || null)} className="w-full text-sm" required />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
-            <textarea rows={4} value={description} onChange={e => setDescription(e.target.value)} className="w-full border rounded-xl px-4 py-2" required />
-          </div>
-          <button type="submit" disabled={isSubmitting} className="w-full py-3 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition disabled:opacity-50">
-            {isSubmitting ? 'A carregar mídia...' : t('actions.save')}
-          </button>
-        </form>
+    <div className="max-w-7xl mx-auto space-y-8 pb-12">
+      
+      {/* HEADER DO DASHBOARD */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Gerir Publicações</h1>
+          <p className="text-sm text-gray-500 mt-1">Cria e organiza os conteúdos da plataforma.</p>
+        </div>
+        
+        <button 
+          onClick={() => setIsFormOpen(!isFormOpen)}
+          className={`px-5 py-2.5 rounded-xl font-semibold flex items-center gap-2 transition-all duration-200 active:scale-95 ${
+            isFormOpen 
+              ? 'bg-gray-100 text-gray-700 hover:bg-gray-200' 
+              : 'bg-gray-900 text-white hover:bg-black shadow-md shadow-gray-900/20'
+          }`}
+        >
+          {isFormOpen ? <X className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
+          {isFormOpen ? 'Cancelar' : 'Nova Publicação'}
+        </button>
       </div>
 
-      <div className="lg:col-span-2 space-y-4">
-        <h2 className="text-xl font-bold">Gerir Publicações</h2>
-        <div className="bg-white rounded-2xl border overflow-hidden">
-          <ul className="divide-y">
-            {posts.map(p => (
-              <li key={p.id} className="p-4 flex justify-between items-center">
-                <div className="flex items-center gap-4">
-                  <img src={p.media_type === 'video' ? 'https://placehold.co/600x400/000000/FFFFFF?text=Video' : p.media_url} className="w-16 h-16 object-cover rounded-lg" />
-                  <div>
-                    <h3 className="font-bold">{p.title}</h3>
-                    <span className="text-xs bg-gray-100 px-2 py-0.5 rounded-full uppercase font-semibold">{t(`types.${p.type}`)}</span>
+      {/* PAINEL DE CRIAÇÃO (COLAPSÁVEL) */}
+      {isFormOpen && (
+        <div className="bg-white p-6 sm:p-8 rounded-3xl border border-gray-100 shadow-md animate-in fade-in slide-in-from-top-4 duration-300">
+          <form onSubmit={handleSubmit} className="space-y-6 max-w-3xl mx-auto">
+            {/* O conteúdo do formulário mantém-se exatamente igual ao anterior */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="md:col-span-2">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Título da Publicação</label>
+                <input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder="Ex: Novo Treino Disponível" className="w-full border border-gray-200 bg-gray-50/50 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 outline-none transition-all" required />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Categoria</label>
+                <div className="flex flex-wrap gap-2 sm:gap-3">
+                  {POST_TYPES.map(postType => (
+                    <button key={postType} type="button" onClick={() => setType(postType)} className={`py-2 px-4 rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2 border ${type === postType ? 'bg-gray-900 border-gray-900 text-white' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
+                      {type === postType && <CheckCircle2 className="w-4 h-4" />}
+                      {t(`types.${postType}`)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="md:col-span-2">
+                <div className="flex justify-between items-center mb-2">
+                  <label className="block text-sm font-semibold text-gray-700">Mídia da Publicação</label>
+                  <div className="flex bg-gray-100 rounded-lg p-1">
+                    <button type="button" onClick={() => setMediaSource('upload')} className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${mediaSource === 'upload' ? 'bg-white shadow text-gray-900' : 'text-gray-500'}`}>Upload</button>
+                    <button type="button" onClick={() => setMediaSource('link')} className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${mediaSource === 'link' ? 'bg-white shadow text-gray-900' : 'text-gray-500'}`}>Link Social</button>
                   </div>
                 </div>
-                <button onClick={() => handleDelete(p.id)} className="text-sm text-red-600 font-medium bg-red-50 px-3 py-1.5 rounded-xl hover:bg-red-100">
-                  {t('actions.delete')}
-                </button>
-              </li>
-            ))}
-          </ul>
+                {mediaSource === 'upload' ? (
+                  <label className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-gray-300 bg-gray-50 rounded-2xl cursor-pointer hover:bg-gray-100 hover:border-gray-400 transition-all group overflow-hidden relative">
+                    <div className="flex flex-col items-center justify-center pt-5 pb-6 text-center px-4">
+                      {mediaFile ? (
+                        <>
+                          <FileImage className="w-10 h-10 text-gray-900 mb-2" />
+                          <p className="text-sm font-semibold text-gray-900 truncate max-w-[250px]">{mediaFile.name}</p>
+                          <p className="text-xs text-gray-500 mt-1">Clica para trocar de ficheiro</p>
+                        </>
+                      ) : (
+                        <>
+                          <UploadCloud className="w-10 h-10 text-gray-400 group-hover:text-gray-600 mb-2 transition-colors" />
+                          <p className="text-sm font-medium text-gray-600"><span className="font-semibold text-gray-900">Clica para enviar</span> ou arrasta o ficheiro</p>
+                          <p className="text-xs text-gray-400 mt-1">Imagens (PNG, JPG) ou Vídeos (MP4)</p>
+                        </>
+                      )}
+                    </div>
+                    <input type="file" accept="image/*,video/*" onChange={e => setMediaFile(e.target.files?.[0] || null)} className="hidden" required={mediaSource === 'upload'} />
+                  </label>
+                ) : (
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                      <Link2 className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <input type="url" value={mediaLink} onChange={e => { setMediaLink(e.target.value); if (linkError) setLinkError(''); }} placeholder="Cola o link do YouTube, Instagram, etc." className={`w-full pl-11 pr-4 py-3.5 bg-gray-50/50 border rounded-xl outline-none transition-all ${linkError ? 'border-red-400 focus:ring-red-400' : 'border-gray-200 focus:ring-gray-900 focus:border-gray-900'}`} required={mediaSource === 'link'} />
+                    {linkError && <p className="text-red-500 text-xs mt-2 flex items-center gap-1.5 font-medium"><AlertCircle className="w-4 h-4" /> {linkError}</p>}
+                  </div>
+                )}
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-semibold text-gray-700 mb-2 flex justify-between items-end">
+                  Descrição
+                  <span className="text-xs text-gray-400 font-normal">Formatado automaticamente</span>
+                </label>
+                <textarea rows={4} value={description} onChange={e => setDescription(e.target.value)} placeholder="Escreve a legenda ou detalhes..." className="w-full border border-gray-200 bg-gray-50/50 rounded-xl px-4 py-3.5 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 outline-none transition-all resize-none" required />
+              </div>
+            </div>
+            <div className="flex justify-end pt-2">
+              <button type="submit" disabled={createPostMutation.isPending} className="w-full sm:w-auto px-8 py-3.5 bg-gray-900 text-white font-semibold rounded-xl hover:bg-black transition-all disabled:opacity-70 disabled:cursor-not-allowed flex justify-center items-center gap-2 shadow-lg shadow-gray-900/20 active:scale-[0.98]">
+                {createPostMutation.isPending ? (
+                  <><div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> A Guardar...</>
+                ) : 'Publicar Conteúdo'}
+              </button>
+            </div>
+          </form>
         </div>
+      )}
+
+      {/* GRID DE CARDS ESTILO PINTEREST / CANVA */}
+      <div className="w-full">
+        {isLoadingPosts ? (
+          <div className="p-12 text-center text-gray-400 animate-pulse font-medium bg-white rounded-3xl border border-gray-100">
+            A carregar publicações...
+          </div>
+        ) : posts.length === 0 ? (
+          <div className="p-16 flex flex-col items-center justify-center text-center bg-white rounded-3xl border border-gray-100 shadow-sm">
+            <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center mb-4">
+              <ImageIcon className="w-8 h-8 text-gray-300" />
+            </div>
+            <h3 className="text-lg font-bold text-gray-900">Sem publicações</h3>
+            <p className="text-gray-500 mt-1 max-w-sm">Ainda não criaste nenhum conteúdo. Clica em "Nova Publicação" para começar.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {posts.map(p => (
+              <div key={p.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden flex flex-col group">
+                
+                {/* O Link envolve a imagem e as informações para o card ser todo clicável */}
+                <Link to={`/admin/publications/${p.id}`} className="flex flex-col flex-1">
+                  
+                  {/* Thumbnail */}
+                  <div className="relative w-full aspect-video bg-gray-100 overflow-hidden flex items-center justify-center">
+                    {p.media_type === 'video' ? (
+                       <FileVideo className="w-10 h-10 text-gray-400 group-hover:scale-110 transition-transform duration-300" />
+                    ) : p.media_type === 'link' ? (
+                       <Link2 className="w-10 h-10 text-gray-400 group-hover:scale-110 transition-transform duration-300" />
+                    ) : (
+                      <img 
+                        src={p.media_url} 
+                        alt={p.title}
+                        loading="lazy"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
+                      />
+                    )}
+                    {/* Tag sobreposta na imagem */}
+                    <div className="absolute top-3 left-3">
+                      <span className="text-[10px] px-2.5 py-1 rounded-md uppercase font-bold tracking-wider bg-white/90 backdrop-blur-sm text-gray-800 shadow-sm">
+                        {t(`types.${p.type}`)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Informações */}
+                  <div className="p-4 flex-1 flex flex-col">
+                    <h3 className="text-[15px] font-bold text-gray-900 leading-tight line-clamp-2 mb-1 group-hover:text-blue-600 transition-colors">
+                      {p.title}
+                    </h3>
+                    <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed flex-1">
+                      {p.description}
+                    </p>
+                    <span className="text-[11px] text-gray-400 font-medium mt-3 block">
+                      {new Date(p.created_at).toLocaleDateString()}
+                    </span>
+                  </div>
+                </Link>
+
+                {/* Rodapé do Card: Ações (Separado do Link para não acionar a rota) */}
+                <div className="px-4 py-3 border-t border-gray-50 bg-gray-50/50 flex justify-end">
+                  <button 
+                    onClick={(e) => handleDelete(e, p.id)} 
+                    disabled={deletePostMutation.isPending}
+                    className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all disabled:opacity-50"
+                    aria-label="Eliminar publicação"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    Eliminar
+                  </button>
+                </div>
+                
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

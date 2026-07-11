@@ -48,13 +48,12 @@ export default function PublicationWatch() {
       })) as PostWithRelations[];
     },
     enabled: !!deviceId,
-    staleTime: 1000 * 60 * 15,
+    staleTime: 1000 * 60 * 15, // Cache otimizado para não sobrecarregar API e CPU
   });
 
   const currentPost = posts.find((p) => p.id === id);
   const fallbackRecommendations = posts.filter((p) => p.id !== id).sort((a, b) => (a.type === currentPost?.type ? -1 : 1));
 
-  // Função Anti-Spam de Likes Otimizada
   const handleLikeAntiSpam = (postId: string, currentHasLiked: boolean) => {
     queryClient.setQueryData(['posts'], (old: any) =>
       old.map((p: any) => {
@@ -127,15 +126,12 @@ export default function PublicationWatch() {
 
   return (
     <div className="w-full overflow-x-hidden bg-white dark:bg-[#0f0f0f] min-h-screen transition-colors duration-300 relative">
-      
-<WatchHeader />
+      <WatchHeader />
 
-      {/* Margem superior `pt-20` (ou maior) para não prender a tela debaixo do header global */}
       <div className="max-w-[1800px] mx-auto pb-16 pt-4 lg:pt-6 text-slate-900 dark:text-white">
         <div className="flex flex-col lg:grid lg:grid-cols-12 lg:gap-8">
           
           <div className="lg:col-span-8 w-full min-w-0 flex flex-col">
-            
             <div className="w-full bg-black lg:rounded-2xl overflow-hidden shadow-xl lg:mb-5 relative">
               <AdvancedPlayer mediaUrl={currentPost.media_url} mediaType={currentPost.media_type} />
             </div>

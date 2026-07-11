@@ -15,10 +15,10 @@ export const router = createBrowserRouter([
     children: [
       { path: "/", element: <Home /> },
       { path: "/publications", element: <PublicationsFeed /> },
-      { path: "/publications/:id", element: <PublicationWatch /> }
+      { path: "/publications/:id", element: <PublicationWatch /> } // Visão do cliente
     ]
   },
-  // Rota de Login (Não precisa estar protegida, senão ninguém entra!)
+  // Rota de Login
   {
     path: "/admin/login",
     element: <AdminLogin />
@@ -26,9 +26,14 @@ export const router = createBrowserRouter([
   // Rotas Protegidas (Apenas Administradores)
   {
     path: "/admin",
-    element: <ProtectedRoute />, // Controla o acesso e renderiza o AdminLayout
+    element: <ProtectedRoute />, 
     children: [
-      { path: "/admin", element: <AdminPublications /> } // URL: /admin
+      // URL: /admin (Lista e Criar)
+      { path: "/admin", element: <AdminPublications /> },
+      
+      // URL: /admin/publications/:id (Visão do Admin para testar/moderar)
+      // Usamos o mesmo componente PublicationWatch que já tens pronto!
+      { path: "/admin/publications/:id", element: <PublicationWatch /> }
     ]
   }
 ]);

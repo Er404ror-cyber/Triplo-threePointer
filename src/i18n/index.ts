@@ -9,6 +9,10 @@ i18n
   .init({
     resources,
     fallbackLng: 'pt',
+    load: 'languageOnly',
+    // Remove a necessidade do nó "translation" no objeto de recursos
+    defaultNS: '',
+    ns: [''],
     interpolation: { escapeValue: false }
   });
 
