@@ -2,11 +2,13 @@ import { useState } from 'react';
 import { Outlet, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabaseClient';
-import LanguageSwitcher from '../i18n/buttom';
+import LanguageSwitcher from '../context/buttom';
 
 interface AdminLayoutProps {
   session: any;
 }
+
+
 
 export default function AdminLayout({ session }: AdminLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -25,10 +27,20 @@ export default function AdminLayout({ session }: AdminLayoutProps) {
           <button className="md:hidden text-white" onClick={() => setIsSidebarOpen(false)}>✕</button>
         </div>
         
-        <nav className="flex-1 p-4 space-y-2">
+        <nav className="flex-1  p-4 space-y-2">
+          <div className='flex justify-between'>
+          <Link to="/admin/dashboard" className="block p-3 rounded-lg hover:bg-slate-800 transition" onClick={() => setIsSidebarOpen(false)}>
+            
+            {t('dashboard')}
+          </Link>
+          </div>
           <Link to="/admin" className="block p-3 rounded-lg hover:bg-slate-800 transition" onClick={() => setIsSidebarOpen(false)}>
             {t('nav.publications')}
           </Link>
+          <Link to="/admin" className="block p-3 rounded-lg hover:bg-slate-800 transition" onClick={() => setIsSidebarOpen(false)}>
+            {t('nav.publications')}
+          </Link>
+          
           <Link to="/" className="block p-3 rounded-lg hover:bg-slate-800 transition text-slate-400">
             Voltar ao Site
           </Link>
