@@ -8,8 +8,12 @@ import PublicationsFeed from "./pages/PublicationsFeed";
 import PublicationWatch from "./pages/PublicationWatch";
 import Jogadores from "./pages/jogadore";
 import Dash from "./Dashboard/das";
+import Newptime from "./pages/newtime";
+import T_jogadores from "./pages/t_jogadores";
+import T_Equipas from "./pages/t_equipas";
+import T_Details from "./pages/t_details";
 import Newplay from "./pages/newplay";
-import Newtime from "./pages/newtime";
+import NewPartida from "./pages/newpartida";
 
 export const router = createBrowserRouter([
   // Rotas Públicas (Visitantes)
@@ -20,7 +24,7 @@ export const router = createBrowserRouter([
       { path: "/", element: <Home /> },
       { path: "/jogadores", element: <Jogadores /> },
       { path: "/publications", element: <PublicationsFeed /> },
-      { path: "/publications/:id", element: <PublicationWatch /> } // Visão do cliente
+      { path: "/publications/:id", element: <PublicationWatch /> }
     ]
   },
   // Rota de Login
@@ -31,16 +35,16 @@ export const router = createBrowserRouter([
   // Rotas Protegidas (Apenas Administradores)
   {
     path: "/admin",
-    element: <ProtectedRoute />, 
+    element: <ProtectedRoute />,
     children: [
-      // URL: /admin (Lista e Criar)
       { path: "/admin", element: <AdminPublications /> },
       { path: "/admin/dashboard", element: <Dash /> },
-      { path: "/admin/dashboard/newplay", element: <Newplay /> },
-      { path: "/admin/dashboard/newtime", element: <Newtime /> },
-      
-      // URL: /admin/publications/:id (Visão do Admin para testar/moderar)
-      // Usamos o mesmo componente PublicationWatch que já tens pronto!
+      { path: "/admin/newtime", element: <Newptime /> },
+      { path: "/admin/newplay", element: <Newplay /> },
+      { path: "/admin/newpartida", element: <NewPartida /> },
+      { path: "/admin/jogadores", element: <T_jogadores /> },
+      { path: "/admin/equipas", element: <T_Equipas /> },
+      { path: "/admin/equipas/detalhes/:id", element: <T_Details /> },
       { path: "/admin/publications/:id", element: <PublicationWatch /> }
     ]
   }

@@ -3,12 +3,14 @@ import { parseMediaUrl } from '../../utils/mediaParser';
 
 interface SmartThumbnailProps {
   mediaUrl: string;
-  mediaType: 'video' | 'image';
+  mediaType: 'video' | 'image' | 'link'; // <--- Adicionado 'link' aqui
 }
 
 export const SmartThumbnail: React.FC<SmartThumbnailProps> = ({ mediaUrl, mediaType }) => {
-  const media = useMemo(() => parseMediaUrl(mediaUrl, mediaType), [mediaUrl, mediaType]);
-
+const media = useMemo(
+  () => parseMediaUrl(mediaUrl, mediaType === "link" ? undefined : mediaType),
+  [mediaUrl, mediaType]
+);
   const containerClass = "w-full aspect-video bg-slate-900 rounded-2xl overflow-hidden relative shadow-sm border border-slate-200/40 group-hover:shadow-xl transition-all duration-500";
   const overlayClass = "absolute inset-0 bg-black/20 group-hover:bg-black/0 transition-colors duration-500 flex items-center justify-center";
 

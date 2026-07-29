@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Gamepad2, Plus, X } from 'lucide-react';
 import { useTranslate } from '../context/LanguageProvider';
 import { Header } from '../components/header/header';
+import { Link } from 'react-router-dom';
 
 const CR7_IMAGES_ROW_1 = [
   "https://picsum.photos/seed/gallery-a-1/500/700",
@@ -18,10 +19,12 @@ const CR7_IMAGES_ROW_2 = [
   "https://picsum.photos/seed/gallery-b-4/500/700",
   "https://picsum.photos/seed/gallery-b-5/500/700",
 ];
+// Obtenha o tipo das chaves aceitas por t()
+type TranslationKey = Parameters<ReturnType<typeof useTranslate>['t']>[0];
 
 interface Team {
   id: string;
-  titleKey: string;
+  titleKey: TranslationKey; // Em vez de string
   initials: string;
   color: string;
 }
@@ -38,6 +41,26 @@ const TEAMS: Team[] = [
   { id: '8', titleKey: 'team_inglaterra', initials: 'ING', color: '#7f1d1d' },
   { id: '9', titleKey: 'team_holanda', initials: 'HOL', color: '#ea580c' },
   { id: '10', titleKey: 'team_belgica', initials: 'BEL', color: '#991b1b' },
+];
+
+
+interface QuickAction {
+  icon: React.ElementType;
+  title: string;
+  description: string;
+  path: string;
+  buttonText: string;
+}
+
+
+const QUICK_ACTIONS: QuickAction[] = [
+  {
+    icon: Gamepad2,
+    title: 'Adicionar nova partida',
+    description: 'Registe o resultado ou agende um novo jogo.',
+    path: '/admin/newtime', // Invertido: agora aponta para newtime
+    buttonText: 'Adicionar partida',
+  },
 ];
 
 export default function Jogadores() {
@@ -90,9 +113,22 @@ export default function Jogadores() {
       <section className="relative w-full bg-gray-900 pt-8 pb-12 px-4 md:pt-10 md:pb-20 md:px-12 border-b border-red-900/30">
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
           <div className="flex flex-col items-center text-center md:items-start md:text-left">
-            <span className="text-red-500 font-bold tracking-widest text-[10px] sm:text-xs uppercase mb-3 sm:mb-4">
-              {t('match_score_label')}
-            </span>
+            
+            {QUICK_ACTIONS.map((action) => (
+                                       <div
+                                         key={action.title}
+                                         className="group rounded-2xl border border-slate-200 bg-white p-5 transition-all hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-sm"
+                                       >
+                                       
+                                         <Link
+                                           to={action.path}
+                                           className="inline-flex items-center gap-1.5 rounded-full bg-blue-600 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-blue-700"
+                                         >
+                                           <Plus size={13} />
+                                           {action.buttonText}
+                                         </Link>
+                                       </div>
+                                     ))}
 
             {/* Placar — envolve em telas pequenas, sem estourar a largura */}
             <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 mb-5 sm:mb-6 bg-black/40 p-4 sm:p-6 rounded-2xl border border-gray-800 w-full max-w-xs sm:max-w-none">
@@ -249,7 +285,7 @@ export default function Jogadores() {
                   {team.initials}
                 </div>
                 <p className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-gray-300 text-center">
-                  {t(team.titleKey)}
+                 {t(team.titleKey)}
                 </p>
               </div>
             ))}

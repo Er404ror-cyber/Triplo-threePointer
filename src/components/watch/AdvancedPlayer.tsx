@@ -3,7 +3,7 @@ import { parseMediaUrl } from '../../utils/mediaParser';
 
 interface AdvancedPlayerProps {
   mediaUrl: string;
-  mediaType: 'video' | 'image';
+  mediaType: 'video' | 'image' | 'link';
 }
 
 export const AdvancedPlayer: React.FC<AdvancedPlayerProps> = ({ mediaUrl, mediaType }) => {

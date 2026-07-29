@@ -2,7 +2,7 @@ import {
   ChevronRight,
   Users,
 } from 'lucide-react';
-import { useTranslate } from '../context/LanguageProvider';
+import { useTranslate, type TranslationKey } from '../context/LanguageProvider';
 
 /**
  * Réplica de landing page de organização de eSports.
@@ -12,12 +12,11 @@ import { useTranslate } from '../context/LanguageProvider';
  * e não podem ser reproduzidos.
  */
 
-
 interface NewsItem {
   id: string;
   created_at: string;
-  categoryKey: string;
-  titleKey: string;
+  categoryKey: TranslationKey; // <- Alterado de string para TranslationKey
+  titleKey: TranslationKey;    // <- Alterado de string para TranslationKey
   media_url: string;
 }
 
@@ -68,7 +67,7 @@ const NEWS: NewsItem[] = [
 
 interface TeamCardItem {
   id: string;
-  titleKey: string;
+  titleKey: TranslationKey; // <- Alterado de string para TranslationKey
   members: string;
   media_url: string;
 }
@@ -87,6 +86,15 @@ const TEAM_CARDS: TeamCardItem[] = [
   { id: "11", titleKey: 'team_stream_team', members: "18", media_url: "https://picsum.photos/seed/vxg-team-stream/600/400" },
 ];
 
+const FOOTER_KEYS: TranslationKey[] = [
+  'home',
+  'calendar',
+  'nav_teams',
+  'nav_partners',
+  'nav_more',
+  'nav_contact',
+  'nav_store',
+];
 const HERO_IMAGE = "https://picsum.photos/seed/vxg-hero/1600/900";
 const SHOP_IMAGE = "https://picsum.photos/seed/vxg-shop/1600/900";
 const CARD_IMAGE_OVERLAY = "absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent";
@@ -276,15 +284,7 @@ export default function EsportsLandingPage() {
           </div>
 
           <nav className="flex flex-wrap justify-center gap-6 text-xs font-bold uppercase tracking-widest text-slate-400">
-            {[
-              'footer_home',
-              'footer_calendar',
-              'footer_teams',
-              'footer_partners',
-              'footer_branding_gallery',
-              'footer_contact',
-              'footer_store',
-            ].map((key) => (
+            {FOOTER_KEYS.map((key) => (
               <a key={key} href="#" className="hover:text-white">
                 {t(key)}
               </a>
