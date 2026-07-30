@@ -8,7 +8,7 @@ import PublicationsFeed from "./pages/PublicationsFeed";
 import PublicationWatch from "./pages/PublicationWatch";
 import Jogadores from "./pages/jogadore";
 import Dash from "./Dashboard/das";
-import Newptime from "./pages/newtime";
+import Newtime from "./pages/NewTeam";
 import T_jogadores from "./pages/t_jogadores";
 import T_Equipas from "./pages/t_equipas";
 import T_Details from "./pages/t_details";
@@ -39,7 +39,7 @@ export const router = createBrowserRouter([
     children: [
       { path: "/admin", element: <AdminPublications /> },
       { path: "/admin/dashboard", element: <Dash /> },
-      { path: "/admin/newtime", element: <Newptime /> },
+      { path: "/admin/newtime", element: <Newtime /> },
       { path: "/admin/newplay", element: <Newplay /> },
       { path: "/admin/newpartida", element: <NewPartida /> },
       { path: "/admin/jogadores", element: <T_jogadores /> },

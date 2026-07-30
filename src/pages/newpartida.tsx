@@ -1,54 +1,36 @@
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { ChevronLeft, Calendar, MapPin, Trophy } from 'lucide-react';
-import { ALL_TEAMS } from './t_equipas';
+import { Link } from "react-router-dom";
+import { ChevronLeft, Trophy } from "lucide-react";
+import MatchForm from "../components/MatchForm";
+import { useMatchForm } from "../types/useMatchForm";
 
 export default function NewPartida() {
-  const navigate = useNavigate();
+  const formState = useMatchForm();
 
-  const [homeTeamId, setHomeTeamId] = useState('');
-  const [awayTeamId, setAwayTeamId] = useState('');
-  const [homeScore, setHomeScore] = useState('');
-  const [awayScore, setAwayScore] = useState('');
-  const [matchDate, setMatchDate] = useState('');
-  const [location, setLocation] = useState('');
-  const [division, setDivision] = useState('1ª Divisão');
-  const [error, setError] = useState('');
+  const formData = {
+    homeTeamId: formState.homeTeamId,
+    awayTeamId: formState.awayTeamId,
+    homeScore: formState.homeScore,
+    awayScore: formState.awayScore,
+    matchDate: formState.matchDate,
+    location: formState.location,
+    division: formState.division,
+    error: formState.error,
+  };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-
-    if (!homeTeamId || !awayTeamId) {
-      setError('Selecione as duas equipas.');
-      return;
-    }
-
-    if (homeTeamId === awayTeamId) {
-      setError('As equipas da casa e visitante não podem ser iguais.');
-      return;
-    }
-
-    const newMatch = {
-      homeTeamId,
-      awayTeamId,
-      homeScore: Number(homeScore) || 0,
-      awayScore: Number(awayScore) || 0,
-      matchDate,
-      location,
-      division,
-    };
-
-    // TODO: substituir por chamada real ao Supabase (insert na tabela de partidas)
-    console.log('Nova partida:', newMatch);
-
-    navigate('/admin/dashboard');
+  const actions = {
+    setHomeTeamId: formState.setHomeTeamId,
+    setAwayTeamId: formState.setAwayTeamId,
+    setHomeScore: formState.setHomeScore,
+    setAwayScore: formState.setAwayScore,
+    setMatchDate: formState.setMatchDate,
+    setLocation: formState.setLocation,
+    setDivision: formState.setDivision,
+    handleSubmit: formState.handleSubmit,
   };
 
   return (
     <div className="min-h-screen bg-slate-100 p-4 font-sans text-slate-900 md:p-8">
       <div className="mx-auto max-w-2xl">
-
         <Link
           to="/admin/dashboard"
           className="mb-6 inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-700"
@@ -64,127 +46,13 @@ export default function NewPartida() {
             </div>
             <div>
               <h1 className="text-xl font-bold text-slate-900">Nova partida</h1>
-              <p className="text-sm text-slate-400">Registe o resultado ou agende um novo jogo</p>
+              <p className="text-sm text-slate-400">
+                Registe o resultado ou agende um novo jogo
+              </p>
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {error && (
-              <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-600">
-                {error}
-              </div>
-            )}
-
-            {/* Equipas */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div>
-                <label className="mb-1 block text-xs font-medium text-slate-600">Equipa da casa</label>
-                <select
-                  value={homeTeamId}
-                  onChange={(e) => setHomeTeamId(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-blue-400"
-                  required
-                >
-                  <option value="">Selecione a equipa</option>
-                  {ALL_TEAMS.map((team) => (
-                    <option key={team.id} value={team.id}>{team.name}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="mb-1 block text-xs font-medium text-slate-600">Equipa visitante</label>
-                <select
-                  value={awayTeamId}
-                  onChange={(e) => setAwayTeamId(e.target.value)}
-                  className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-blue-400"
-                  required
-                >
-                  <option value="">Selecione a equipa</option>
-                  {ALL_TEAMS.map((team) => (
-                    <option key={team.id} value={team.id}>{team.name}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* Resultado */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="mb-1 block text-xs font-medium text-slate-600">Pontos — Casa</label>
-                <input
-                  type="number"
-                  min="0"
-                  value={homeScore}
-                  onChange={(e) => setHomeScore(e.target.value)}
-                  placeholder="0"
-                  className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-blue-400"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-medium text-slate-600">Pontos — Visitante</label>
-                <input
-                  type="number"
-                  min="0"
-                  value={awayScore}
-                  onChange={(e) => setAwayScore(e.target.value)}
-                  placeholder="0"
-                  className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-blue-400"
-                />
-              </div>
-            </div>
-
-            {/* Data e local */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div>
-                <label className="mb-1 block text-xs font-medium text-slate-600">Data da partida</label>
-                <div className="relative">
-                  <Calendar size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <input
-                    type="date"
-                    value={matchDate}
-                    onChange={(e) => setMatchDate(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 py-2.5 pl-9 pr-3 text-sm text-slate-700 outline-none focus:border-blue-400"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="mb-1 block text-xs font-medium text-slate-600">Local</label>
-                <div className="relative">
-                  <MapPin size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <input
-                    type="text"
-                    value={location}
-                    onChange={(e) => setLocation(e.target.value)}
-                    placeholder="Ex: Pavilhão da Machava"
-                    className="w-full rounded-xl border border-slate-200 py-2.5 pl-9 pr-3 text-sm text-slate-700 outline-none focus:border-blue-400"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Divisão */}
-            <div>
-              <label className="mb-1 block text-xs font-medium text-slate-600">Divisão</label>
-              <select
-                value={division}
-                onChange={(e) => setDivision(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-blue-400"
-              >
-                <option value="1ª Divisão">1ª Divisão</option>
-                <option value="2ª Divisão">2ª Divisão</option>
-              </select>
-            </div>
-
-            <button
-              type="submit"
-              className="w-full rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-700"
-            >
-              Guardar partida
-            </button>
-          </form>
+          <MatchForm formData={formData} actions={actions} />
         </div>
       </div>
     </div>
