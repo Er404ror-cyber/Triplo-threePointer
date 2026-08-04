@@ -2,11 +2,14 @@ import { useState } from 'react';
 import { Outlet, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabaseClient';
-import LanguageSwitcher from '../i18n/buttom';
+import LanguageSwitcher from '../context/buttom';
+import { BlocksIcon, ExternalLink, LogOut, Navigation, Shield, Users } from 'lucide-react';
 
 interface AdminLayoutProps {
   session: any;
 }
+
+
 
 export default function AdminLayout({ session }: AdminLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -26,11 +29,48 @@ export default function AdminLayout({ session }: AdminLayoutProps) {
         </div>
         
         <nav className="flex-1 p-4 space-y-2">
-          <Link to="/admin" className="block p-3 rounded-lg hover:bg-slate-800 transition" onClick={() => setIsSidebarOpen(false)}>
-            {t('nav.publications')}
+          <Link 
+            to="/admin" 
+            className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-800 transition" 
+            onClick={() => setIsSidebarOpen(false)}
+          >
+            <Navigation size={20} />
+            <span>{t('nav.publications')}</span>
           </Link>
-          <Link to="/" className="block p-3 rounded-lg hover:bg-slate-800 transition text-slate-400">
-            Voltar ao Site
+
+          <Link 
+            to="/admin/dashboard" 
+            className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-800 transition" 
+            onClick={() => setIsSidebarOpen(false)}
+          >    
+            <BlocksIcon size={20} /> 
+            <span>{t('dashboard')}</span>
+          </Link>
+
+          <Link 
+            to="/admin/jogadores" 
+            className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-800 transition" 
+            onClick={() => setIsSidebarOpen(false)}
+          >
+            <Users size={20} />
+            <span>{t('Jogadores')}</span>
+          </Link>
+       
+          <Link 
+            to="/admin/equipas" 
+            className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-800 transition" 
+            onClick={() => setIsSidebarOpen(false)}
+          >
+            <Shield size={20} />
+            <span>{t('Equipas')}</span>
+          </Link>
+          
+          <Link 
+            to="/" 
+            className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-800 transition text-slate-400"
+          >
+            <ExternalLink size={20} />
+            <span>Voltar ao Site</span>
           </Link>
         </nav>
 
@@ -42,9 +82,10 @@ export default function AdminLayout({ session }: AdminLayoutProps) {
           </div>
           <button 
             onClick={handleLogout}
-            className="w-full text-left p-2.5 text-sm font-medium text-red-400 hover:bg-red-950/30 rounded-lg transition"
+            className="w-full flex items-center justify-start gap-3 p-2.5 text-sm font-medium text-red-400 hover:bg-red-950/30 rounded-lg transition"
           >
-            Sair da Conta
+            <LogOut size={18} />
+            <span>Sair da Conta</span>
           </button>
           <div className="pt-2 border-t border-slate-800/60">
             <LanguageSwitcher />

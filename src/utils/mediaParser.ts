@@ -1,4 +1,4 @@
-export type Platform = 'youtube' | 'tiktok' | 'instagram' | 'facebook' | 'native' | 'image';
+export type Platform = 'youtube' | 'tiktok' | 'instagram' | 'facebook' | 'native' | 'image' | 'link';
 
 export interface ParsedMedia {
   platform: Platform;
@@ -7,11 +7,18 @@ export interface ParsedMedia {
   thumbnailUrl: string | null;
 }
 
-export function parseMediaUrl(url: string, mediaType: 'video' | 'image' = 'video'): ParsedMedia {
+export function parseMediaUrl(
+  url: string, 
+  mediaType: 'video' | 'image' | 'link' = 'video'
+): ParsedMedia {
   if (!url) return { platform: 'native', id: null, embedUrl: '', thumbnailUrl: '' };
   
   if (mediaType === 'image') {
     return { platform: 'image', id: null, embedUrl: url, thumbnailUrl: url };
+  }
+
+  if (mediaType === 'link') {
+    return { platform: 'link', id: null, embedUrl: url, thumbnailUrl: null };
   }
 
   // YOUTUBE

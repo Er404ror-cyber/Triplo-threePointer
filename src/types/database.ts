@@ -14,7 +14,7 @@ export interface Post {
   description: string;
   type: PostType;
   media_url: string;
-  media_type: 'image' | 'video';
+  media_type: 'image' | 'video' | 'link';
   created_at: string;
   event_date?: string;
   treino_difficulty?: 'iniciante' | 'intermediario' | 'avancado';

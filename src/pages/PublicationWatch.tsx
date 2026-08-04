@@ -1,10 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom'; // ✅ Importação correta do react-router-dom
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabaseClient';
 import type { PostWithRelations } from '../types/watch';
-
 import { AdvancedPlayer } from '../components/watch/AdvancedPlayer';
 import { PostInfo } from '../components/watch/PostInfo';
 import { CommentsSection } from '../components/watch/CommentsSection';
@@ -14,16 +12,14 @@ import { WatchHeader } from '../components/watch/WatchHeader';
 
 export default function PublicationWatch() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { t } = useTranslation();
 
   const [deviceId, setDeviceId] = useState<string>('');
   const [userName, setUserName] = useState<string>('');
   const [isNameModalOpen, setIsNameModalOpen] = useState(false);
   const [pendingComment, setPendingComment] = useState<{ postId: string; content: string } | null>(null);
 
-  const likeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const likeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     let localId = localStorage.getItem('visitor_device_id');
@@ -48,11 +44,12 @@ export default function PublicationWatch() {
       })) as PostWithRelations[];
     },
     enabled: !!deviceId,
-    staleTime: 1000 * 60 * 15, // Cache otimizado para não sobrecarregar API e CPU
+    staleTime: 1000 * 60 * 15,
   });
 
   const currentPost = posts.find((p) => p.id === id);
-  const fallbackRecommendations = posts.filter((p) => p.id !== id).sort((a, b) => (a.type === currentPost?.type ? -1 : 1));
+  // 'b' removido utilizando '_' para satisfazer o linter/TS
+  const fallbackRecommendations = posts.filter((p) => p.id !== id).sort((a, _) => (a.type === currentPost?.type ? -1 : 1));
 
   const handleLikeAntiSpam = (postId: string, currentHasLiked: boolean) => {
     queryClient.setQueryData(['posts'], (old: any) =>
