@@ -14,7 +14,6 @@ export const Header = () => {
       label: "publications",
       to: "/publications",
     },
-   
     {
       label: "jogadores",
       to: "/jogadores",
@@ -60,7 +59,12 @@ export const Header = () => {
   return (
     <header
       ref={headerRef}
-      className="fixed left-1/2 top-4 z-50 w-[94%] max-w-7xl -translate-x-1/2 rounded-2xl border border-white/10 bg-[#0a0e14]"
+      /* 
+        SEM BLUR (ALTA PERFORMANCE):
+        1. bg-black/60 -> Transparência sem custo de renderização de desfoque
+        2. Removed do backdrop-blur para evitar overhead na GPU/CPU durante o scroll
+      */
+      className="fixed left-1/2 top-4 z-50 w-[94%] max-w-7xl -translate-x-1/2 rounded-2xl border border-white/10 bg-black/60 shadow-lg"
     >
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
         <div className="flex items-center gap-2">
@@ -79,7 +83,7 @@ export const Header = () => {
             <Link
               key={link.to}
               to={link.to}
-              className="flex items-center uppercase text-slate-300 hover:text-white"
+              className="flex items-center uppercase text-slate-300 hover:text-white transition-colors"
             >
               {t(link.label)}
             </Link>
@@ -90,8 +94,8 @@ export const Header = () => {
           {/* Ícones extra só aparecem no desktop */}
           <div className="hidden items-center gap-6 md:flex">
             <LanguageSwitcher />
-            <Info size={16} className="cursor-pointer hover:text-white" />
-            <Phone size={16} className="cursor-pointer hover:text-white" />
+            <Info size={16} className="cursor-pointer hover:text-white transition-colors" />
+            <Phone size={16} className="cursor-pointer hover:text-white transition-colors" />
           </div>
 
           {/* Botão hambúrguer — só em mobile */}
@@ -106,15 +110,15 @@ export const Header = () => {
         </div>
       </div>
 
-      {/* Menu mobile — dropdown abaixo do header */}
+      {/* Menu mobile — sem blur */}
       {isMenuOpen && (
-        <nav className="flex flex-col gap-2 border-t border-white/10 px-6 py-5 md:hidden">
+        <nav className="flex flex-col gap-2 border-t border-white/10 bg-black/90 px-6 py-5 rounded-b-2xl md:hidden">
           {NAV_LINKS.map((link) => (
             <Link
               key={link.to}
               to={link.to}
               onClick={() => setIsMenuOpen(false)}
-              className="rounded-lg px-3 py-4 text-sm font-bold uppercase tracking-widest text-slate-300 hover:bg-white/5 hover:text-white"
+              className="rounded-lg px-3 py-4 text-sm font-bold uppercase tracking-widest text-slate-300 hover:bg-white/10 hover:text-white transition-colors"
             >
               {t(link.label)}
             </Link>
@@ -122,11 +126,11 @@ export const Header = () => {
 
           <div className="mt-3 flex items-center gap-4 border-t border-white/10 px-3 pt-5 text-slate-300">
             <LanguageSwitcher />
-            <a href="#" className="flex items-center gap-2 py-2 hover:text-white">
+            <a href="#" className="flex items-center gap-2 py-2 hover:text-white transition-colors">
               <Info size={18} />
               <span className="text-sm font-bold uppercase tracking-widest">Info</span>
             </a>
-            <a href="#" className="flex items-center gap-2 py-2 hover:text-white">
+            <a href="#" className="flex items-center gap-2 py-2 hover:text-white transition-colors">
               <Phone size={18} />
               <span className="text-sm font-bold uppercase tracking-widest">Contato</span>
             </a>
