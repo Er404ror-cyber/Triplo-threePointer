@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useParams } from 'react-router-dom'; // ✅ Importação correta do react-router-dom
+import { useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabaseClient';
 import type { PostWithRelations } from '../types/watch';
@@ -48,8 +48,14 @@ export default function PublicationWatch() {
   });
 
   const currentPost = posts.find((p) => p.id === id);
-  // 'b' removido utilizando '_' para satisfazer o linter/TS
-  const fallbackRecommendations = posts.filter((p) => p.id !== id).sort((a, _) => (a.type === currentPost?.type ? -1 : 1));
+  
+  const fallbackRecommendations = posts
+    .filter((p) => p.id !== id)
+    .sort((a, b) => {
+      const aIsType = a.type === currentPost?.type ? 1 : 0;
+      const bIsType = b.type === currentPost?.type ? 1 : 0;
+      return bIsType - aIsType;
+    });
 
   const handleLikeAntiSpam = (postId: string, currentHasLiked: boolean) => {
     queryClient.setQueryData(['posts'], (old: any) =>
@@ -125,23 +131,32 @@ export default function PublicationWatch() {
     <div className="w-full overflow-x-hidden bg-white dark:bg-[#0f0f0f] min-h-screen transition-colors duration-300 relative">
       <WatchHeader />
 
-      <div className="max-w-[1800px] mx-auto pb-16 pt-4 lg:pt-6 text-slate-900 dark:text-white">
+      {/* Ajustei o padding no mobile para o vídeo tocar nas bordas laterais */}
+      <div className="max-w-[1800px] mx-auto pb-16 pt-4 lg:pt-6 text-slate-900 dark:text-white px-0 lg:px-4">
+        
         <div className="flex flex-col lg:grid lg:grid-cols-12 lg:gap-8">
           
           <div className="lg:col-span-8 w-full min-w-0 flex flex-col">
-            <div className="w-full bg-black lg:rounded-2xl overflow-hidden shadow-xl lg:mb-5 relative">
+            
+           {/* --- ÁREA DO VÍDEO CORRIGIDA --- */}
+           <div className="w-full relative lg:mb-5 bg-black lg:rounded-2xl overflow-hidden shadow-sm lg:shadow-md border-y lg:border border-slate-200/50 dark:border-white/5 z-0">
               <AdvancedPlayer mediaUrl={currentPost.media_url} mediaType={currentPost.media_type} />
             </div>
-
-            <div className="pt-2 lg:pt-0 z-10">
+            
+            <div className="pt-3 lg:pt-0 z-10 px-4 lg:px-0">
               <PostInfo 
                 post={currentPost} 
                 hasLiked={currentHasLiked} 
                 onLike={() => handleLikeAntiSpam(currentPost.id, currentHasLiked)} 
               />
               
-              <div className="px-4 lg:px-0 mt-6 w-full">
-                <CommentsSection post={currentPost} deviceId={deviceId} userName={userName} onSubmit={handleIntentToComment} />
+              <div className="mt-6 w-full">
+                <CommentsSection 
+                  post={currentPost} 
+                  deviceId={deviceId} 
+                  userName={userName} 
+                  onSubmit={handleIntentToComment} 
+                />
               </div>
             </div>
           </div>
@@ -151,6 +166,7 @@ export default function PublicationWatch() {
           </div>
 
         </div>
+
       </div>
 
       <NameModal isOpen={isNameModalOpen} onClose={() => setIsNameModalOpen(false)} onSave={handleSaveNameModal} />

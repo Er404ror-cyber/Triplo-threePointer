@@ -4,7 +4,6 @@ import { Header } from '../components/header/header';
 export default function PublicLayout() {
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">
-      <Header />
       <main className="flex-grow mx-auto w-full">
         <Outlet />
       </main>
