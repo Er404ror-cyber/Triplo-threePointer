@@ -10,7 +10,7 @@ import Jogadores from "./pages/jogadore";
 import Dash from "./Dashboard/das";
 import Newtime from "./pages/NewTeam";
 import T_jogadores from "./pages/t_jogadores";
-import T_Equipas from "./pages/t_equipas";
+import TeamManagement from "./pages/TeamManagement";
 import T_Details from "./pages/t_details";
 import Newplay from "./pages/newplay";
 import NewPartida from "./pages/newpartida";
@@ -43,7 +43,7 @@ export const router = createBrowserRouter([
       { path: "/admin/newplay", element: <Newplay /> },
       { path: "/admin/newpartida", element: <NewPartida /> },
       { path: "/admin/jogadores", element: <T_jogadores /> },
-      { path: "/admin/equipas", element: <T_Equipas /> },
+      { path: "/admin/equipas", element: <TeamManagement /> },
       { path: "/admin/equipas/detalhes/:id", element: <T_Details /> },
       { path: "/admin/publications/:id", element: <PublicationWatch /> }
     ]

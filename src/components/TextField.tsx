@@ -1,62 +1,66 @@
 import type { LucideIcon } from "lucide-react";
+
 interface TextFieldProps {
   label: string;
-  icon: LucideIcon;
-  value: string;
-  onChange: (value: string) => void;
+  icon?: LucideIcon;
+  value?: string;
+  onChange?: (val: string) => void; // 💡 Tornado opcional para evitar quebras
   placeholder?: string;
   maxLength?: number;
   showCounter?: boolean;
   required?: boolean;
-  inputMode?: "text" | "numeric";
+  inputMode?: "text" | "numeric" | "decimal";
   numericOnly?: boolean;
 }
 
 export default function TextField({
   label,
   icon: Icon,
-  value,
+  value = "",
   onChange,
   placeholder,
   maxLength,
-  showCounter = false,
-  required = false,
-  inputMode = "text",
+  showCounter,
+  required,
+  inputMode,
   numericOnly = false,
 }: TextFieldProps) {
+  const currentLength = (value ?? "").length;
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let nextValue = e.target.value;
+    if (numericOnly) {
+      nextValue = nextValue.replace(/\D/g, "");
+    }
+    // 💡 Só chama se onChange existir como função
+    if (typeof onChange === "function") {
+      onChange(nextValue);
+    }
+  };
+
   return (
-    <div>
-      <div className="mb-2 flex items-center justify-between">
-        <label className="block text-sm font-semibold text-slate-700">
-          {label}
-        </label>
-
-        {showCounter && maxLength && (
-          <span className="text-xs text-slate-400">
-            {value.length}/{maxLength}
-          </span>
-        )}
-      </div>
-
-      <div className="relative">
-        <Icon
-          className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-          size={18}
-        />
-
+    <div className="space-y-1.5">
+      <label className="text-sm font-semibold text-slate-700">{label}</label>
+      <div className="relative flex items-center">
+        {Icon && <Icon className="absolute left-3 text-slate-400" size={18} />}
         <input
           type="text"
-          inputMode={inputMode}
-          value={value}
-          onChange={(e) =>
-            onChange(numericOnly ? e.target.value.replace(/\D/g, "") : e.target.value)
-          }
-          maxLength={maxLength}
+          value={value ?? ""}
+          onChange={handleChange}
           placeholder={placeholder}
-          className="w-full rounded-xl border border-slate-200 py-3 pl-12 pr-4 outline-none transition focus:border-blue-500"
+          maxLength={maxLength}
           required={required}
+          inputMode={inputMode}
+          className={`w-full rounded-xl border border-slate-200 py-2.5 pr-4 text-sm text-slate-900 transition focus:border-blue-500 focus:outline-none ${
+            Icon ? "pl-10" : "pl-4"
+          }`}
         />
       </div>
+      {showCounter && maxLength && (
+        <span className="text-xs text-slate-400">
+          {currentLength}/{maxLength}
+        </span>
+      )}
     </div>
   );
 }
