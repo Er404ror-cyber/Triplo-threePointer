@@ -1,14 +1,13 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Users, Calendar, MapPin } from 'lucide-react';
-import type { Team } from '../pages/t_equipas';
+import type { Team } from '../pages/TeamManagement';
 
 interface TopTeamsGridProps {
   teams: Team[];
 }
 
 export function TopTeamsGrid({ teams }: TopTeamsGridProps) {
-  const top5 = teams.slice(0, 5);
-  // Estado para armazenar IDs de equipas cujas imagens falharam no carregamento
   const [failedImages, setFailedImages] = useState<Record<string, boolean>>({});
 
   const handleImageError = (id: string) => {
@@ -17,19 +16,21 @@ export function TopTeamsGrid({ teams }: TopTeamsGridProps) {
 
   return (
     <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-      {top5.map((team, idx) => {
-        const imageUrl = team.logo || team.photo || team.avatarUrl;
+      {teams.map((team, idx) => {
+        const imageUrl = team.logo;
         const hasImageFailed = failedImages[team.id];
 
         return (
-          <div
+          <Link
             key={team.id}
-            className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all hover:-translate-y-1 hover:shadow-md"
+            to={`/admin/equipas/${team.id}`}
+            state={{ team }} /* 💡 AQUI: Passamos os dados completos da equipa na navegação */
+            className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all hover:-translate-y-1 hover:shadow-md hover:border-blue-300 cursor-pointer"
           >
             {/* FAIXA COLORIDA SUPERIOR */}
             <div
               className="relative h-24 w-full px-4 pt-3 flex justify-between items-start"
-              style={{ backgroundColor: team.color || '#2563eb' }}
+              style={{ backgroundColor: team.color }}
             >
               <span className="rounded-full bg-black/25 px-2.5 py-1 text-[10px] font-bold text-white backdrop-blur-sm shadow-sm">
                 #{idx + 1} Destaque
@@ -52,7 +53,7 @@ export function TopTeamsGrid({ teams }: TopTeamsGridProps) {
                 ) : (
                   <div
                     className="flex h-full w-full items-center justify-center font-black text-lg text-white"
-                    style={{ backgroundColor: team.color || '#2563eb' }}
+                    style={{ backgroundColor: team.color }}
                   >
                     {team.initials}
                   </div>
@@ -62,7 +63,7 @@ export function TopTeamsGrid({ teams }: TopTeamsGridProps) {
               {team.founded && (
                 <span className="flex items-center gap-1 text-[11px] font-medium text-slate-400 pb-1">
                   <Calendar size={13} />
-                  Fundado em {team.founded}
+                  Fundado {team.founded}
                 </span>
               )}
             </div>
@@ -89,13 +90,13 @@ export function TopTeamsGrid({ teams }: TopTeamsGridProps) {
 
                 <span
                   className="rounded-md bg-slate-50 px-2.5 py-1 font-black text-xs uppercase tracking-wider border border-slate-100"
-                  style={{ color: team.color || '#2563eb' }}
+                  style={{ color: team.color }}
                 >
                   {team.initials}
                 </span>
               </div>
             </div>
-          </div>
+          </Link>
         );
       })}
     </div>

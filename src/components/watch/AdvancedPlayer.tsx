@@ -26,7 +26,7 @@ export const AdvancedPlayer: React.FC<AdvancedPlayerProps> = ({ mediaUrl, mediaT
     };
   }, [isFullscreenImage]);
 
-  const baseWrapperClasses = "w-full bg-black lg:rounded-2xl flex items-center justify-center relative overflow-hidden group border border-slate-200/5 dark:border-white/5 transition-all duration-300 shadow-xl";
+  const baseWrapperClasses = "w-full bg-black flex items-center justify-center relative overflow-hidden group transition-all duration-300";
 
   // ==========================================
   // 1. IMAGEM
@@ -34,17 +34,17 @@ export const AdvancedPlayer: React.FC<AdvancedPlayerProps> = ({ mediaUrl, mediaT
   if (media.platform === 'image') {
     return (
       <>
-        <div className={`${baseWrapperClasses} min-h-[30vh] max-h-[85vh]`}>
+        <div className={`${baseWrapperClasses} min-h-[30vh] lg:min-h-[50vh] max-h-[75vh]`}>
           <img 
             src={media.embedUrl} 
             alt="Conteúdo Visual" 
             loading="lazy"
-            className="w-auto h-auto max-w-full max-h-[85vh] object-contain cursor-zoom-in transition-all duration-500 group-hover:scale-[1.02] group-hover:opacity-95" 
+            className="w-auto h-auto max-w-full max-h-[75vh] object-contain cursor-zoom-in transition-transform duration-500 group-hover:scale-[1.01]" 
             onClick={() => setIsFullscreenImage(true)}
           />
           <button 
             onClick={() => setIsFullscreenImage(true)}
-            className="absolute bottom-4 right-4 bg-black/60 hover:bg-[#065fd4] dark:hover:bg-[#3ea6ff] text-white p-2.5 rounded-xl opacity-0 group-hover:opacity-100 transition-all duration-300 backdrop-blur-md shadow-md transform active:scale-95"
+            className="absolute bottom-4 right-4 bg-black/70 hover:bg-[#065fd4] dark:hover:bg-[#3ea6ff] text-white p-2.5 rounded-xl opacity-0 group-hover:opacity-100 transition-all duration-300 backdrop-blur-md shadow-lg transform active:scale-95"
             title="Ver Ecrã Inteiro"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-5 h-5">
@@ -61,7 +61,7 @@ export const AdvancedPlayer: React.FC<AdvancedPlayerProps> = ({ mediaUrl, mediaT
             <img 
               src={media.embedUrl} 
               alt="Ecrã Inteiro" 
-              className="max-w-full max-h-[95vh] object-contain pointer-events-none p-2 md:p-8 drop-shadow-2xl" 
+              className="max-w-full max-h-[95vh] object-contain pointer-events-none p-4 drop-shadow-2xl" 
             />
             <button 
               className="absolute top-6 right-6 text-white bg-white/10 hover:bg-red-500/90 p-3 rounded-full backdrop-blur-md transition-colors active:scale-95 shadow-xl border border-white/20"
@@ -82,14 +82,14 @@ export const AdvancedPlayer: React.FC<AdvancedPlayerProps> = ({ mediaUrl, mediaT
   // ==========================================
   if (media.platform === 'native') {
     return (
-      <div className={`${baseWrapperClasses} min-h-[30vh] max-h-[85vh]`}>
+      <div className={`${baseWrapperClasses} min-h-[30vh] lg:min-h-[50vh] max-h-[75vh]`}>
         <video 
           src={media.embedUrl} 
           controls 
           playsInline 
           preload="metadata" 
           controlsList="nodownload" 
-          className="w-auto h-auto max-w-full max-h-[85vh] object-contain focus:outline-none bg-black" 
+          className="w-auto h-auto max-w-full max-h-[75vh] object-contain focus:outline-none bg-black" 
         />
       </div>
     );
@@ -98,20 +98,19 @@ export const AdvancedPlayer: React.FC<AdvancedPlayerProps> = ({ mediaUrl, mediaT
   // ==========================================
   // 3. IFRAMES SOCIAIS (YOUTUBE / TIKTOK / SHORTS)
   // ==========================================
-  // Adapta o layout exterior e interior baseando-se no formato:
   const wrapperAspectClass = media.isVertical 
-    ? 'h-[75vh] md:h-[85vh]' // Fixa a altura para vídeos tipo TikTok sem distorcer o layout da página
-    : 'aspect-video'; // 16:9 clássico para tipo YouTube
+    ? 'h-[75vh] md:h-[80vh]' 
+    : 'aspect-video';
 
   const iframeClass = media.isVertical
-    ? 'h-full aspect-[9/16]' // O iframe fica centrado na vertical, com o aspecto correto (gera pilar lateral preto)
-    : 'absolute top-0 left-0 w-full h-full'; // YouTube ocupa todo o espaço possível
+    ? 'h-full aspect-[9/16] shadow-2xl' 
+    : 'absolute top-0 left-0 w-full h-full';
 
   return (
     <div className={`${baseWrapperClasses} ${wrapperAspectClass}`}>
       {!isIframeLoaded && (
-        <div className="absolute inset-0 flex items-center justify-center bg-slate-900 z-10">
-          <div className="w-10 h-10 border-4 border-slate-700 border-t-[#3ea6ff] rounded-full animate-spin"></div>
+        <div className="absolute inset-0 flex items-center justify-center bg-slate-900/10 dark:bg-black/50 z-10">
+          <div className="w-10 h-10 border-4 border-slate-700 border-t-[#065fd4] dark:border-t-[#3ea6ff] rounded-full animate-spin"></div>
         </div>
       )}
 

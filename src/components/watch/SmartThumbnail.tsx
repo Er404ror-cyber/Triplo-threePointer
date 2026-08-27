@@ -1,7 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { parseSocialMediaUrl } from '../../utils/mediaParser';
 import { useTranslate } from '../../context/LanguageProvider';
-// Importa o teu novo hook
 
 interface SmartThumbnailProps {
   mediaUrl: string;
@@ -9,7 +8,7 @@ interface SmartThumbnailProps {
 }
 
 export const SmartThumbnail: React.FC<SmartThumbnailProps> = ({ mediaUrl, mediaType }) => {
-  const { t } = useTranslate(); // Novo hook aplicado
+  const { t } = useTranslate();
   const media = useMemo(() => parseSocialMediaUrl(mediaUrl, mediaType), [mediaUrl, mediaType]);
   
   const initialThumbnail = useMemo(() => {
@@ -33,9 +32,57 @@ export const SmartThumbnail: React.FC<SmartThumbnailProps> = ({ mediaUrl, mediaT
     setIframeError(false);
   }, [initialThumbnail]);
 
-  const containerClass = "relative w-full h-full bg-[#111] overflow-hidden group flex items-center justify-center rounded-md"; 
-  const mediaElementClass = "absolute inset-0 w-full h-full object-cover bg-black opacity-90 transition-opacity duration-300 group-hover:opacity-100";
+  const containerClass = "absolute inset-0 w-full h-full bg-[#111] overflow-hidden group flex items-center justify-center"; 
+  const mediaElementClass = "absolute top-0 left-0 w-full h-full object-cover bg-black transition-transform duration-500 group-hover:scale-105";
 
+  // ==========================================
+  // FALLBACK UI (Quando ocorre erro na Thumbnail)
+  // ==========================================
+  const renderFallback = () => {
+    let icon;
+    
+    if (mediaType === 'video') {
+      icon = (
+        <svg fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24" className="w-5 h-5">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+        </svg>
+      );
+    } else if (mediaType === 'image') {
+      icon = (
+        <svg fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24" className="w-5 h-5">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+        </svg>
+      );
+    } else {
+      icon = (
+        <svg fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24" className="w-5 h-5">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
+        </svg>
+      );
+    }
+
+    return (
+      <div className={`${containerClass} bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900`}>
+        <div className="flex flex-col items-center justify-center z-10 transition-transform duration-300 group-hover:scale-105">
+          <div className="w-10 h-10 bg-black/5 dark:bg-white/5 text-slate-500 dark:text-slate-400 rounded-full flex items-center justify-center mb-1.5 shadow-sm border border-black/5 dark:border-white/5">
+            {icon}
+          </div>
+          <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 opacity-90 px-2 text-center line-clamp-1">
+            {t('unavailable' as any) || 'Indisponível'}
+          </span>
+        </div>
+      </div>
+    );
+  };
+
+  // Se já detetámos um erro anterior, mostramos logo o Fallback
+  if (imgError || iframeError) {
+    return renderFallback();
+  }
+
+  // ==========================================
+  // IMAGENS NATIVAS
+  // ==========================================
   if (media.platform === 'image') {
     return (
       <div className={containerClass}>
@@ -44,12 +91,16 @@ export const SmartThumbnail: React.FC<SmartThumbnailProps> = ({ mediaUrl, mediaT
           alt="Conteúdo visual" 
           loading="lazy"
           decoding="async"
+          onError={() => setImgError(true)}
           className={mediaElementClass}
         />
       </div>
     );
   }
 
+  // ==========================================
+  // VÍDEOS NATIVOS
+  // ==========================================
   if (media.platform === 'native') {
     return (
       <div className={containerClass}>
@@ -58,29 +109,23 @@ export const SmartThumbnail: React.FC<SmartThumbnailProps> = ({ mediaUrl, mediaT
           preload="metadata" 
           muted 
           playsInline
+          onError={() => setImgError(true)}
           className={mediaElementClass}
         />
       </div>
     );
   }
 
+  // ==========================================
+  // LINKS GENÉRICOS (Usam o Fallback diretamente)
+  // ==========================================
   if (mediaType === 'link' && media.platform === 'generic') {
-    return (
-      <div className={`${containerClass} bg-[#1a1a1a] p-4 text-center border border-white/5`}>
-        <div className="flex flex-col items-center justify-center z-10 transition-opacity duration-300 opacity-80 group-hover:opacity-100">
-          <div className="w-10 h-10 bg-blue-500/10 text-blue-400 rounded-full flex items-center justify-center mb-2">
-            <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" className="w-5 h-5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-            </svg>
-          </div>
-          <span className="text-[11px] font-semibold text-slate-400">
-            {t('externalLink' as any)}
-          </span>
-        </div>
-      </div>
-    );
+    return renderFallback();
   }
 
+  // ==========================================
+  // GESTÃO DE ERROS PARA THUMBNAILS (Ex: YouTube)
+  // ==========================================
   const handleThumbnailError = () => {
     if (media.platform === 'youtube' && imgSrc) {
       const ytId = media.embedUrl.split('embed/')[1]?.split('?')[0];
@@ -98,7 +143,7 @@ export const SmartThumbnail: React.FC<SmartThumbnailProps> = ({ mediaUrl, mediaT
     setImgError(true);
   };
 
-  if (imgSrc && !imgError) {
+  if (imgSrc) {
     return (
       <div className={containerClass}>
         <img 
@@ -113,38 +158,12 @@ export const SmartThumbnail: React.FC<SmartThumbnailProps> = ({ mediaUrl, mediaT
     );
   }
 
-  if (media.platform === 'youtube') {
-    return (
-      <div className={`${containerClass} bg-[#1a1a1a] border border-white/5`}>
-        <div className="w-10 h-10 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center opacity-80 group-hover:opacity-100 transition-opacity duration-300">
-          <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-            <path d="M8 5v14l11-7z" />
-          </svg>
-        </div>
-      </div>
-    );
-  }
-
+  // ==========================================
+  // ÚLTIMO RECURSO: IFRAME
+  // ==========================================
   let iframeUrl = media.embedUrl;
   if (media.platform === 'facebook' && !iframeUrl.includes('plugins/video.php')) {
     iframeUrl = `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(mediaUrl)}&show_text=false&width=auto`;
-  }
-
-  if (iframeError) {
-    return (
-      <div className={`${containerClass} bg-[#1a1a1a] p-4 text-center border border-white/5`}>
-        <div className="flex flex-col items-center justify-center z-10 opacity-70 group-hover:opacity-100 transition-opacity duration-300">
-          <div className="w-10 h-10 bg-white/5 text-white/30 rounded-full flex items-center justify-center mb-2">
-            <svg fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24" className="w-5 h-5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-            </svg>
-          </div>
-          <span className="text-[11px] font-semibold text-white/40">
-            {t('unavailable' as any)}
-          </span>
-        </div>
-      </div>
-    );
   }
 
   return (
@@ -152,8 +171,7 @@ export const SmartThumbnail: React.FC<SmartThumbnailProps> = ({ mediaUrl, mediaT
       <iframe 
         src={iframeUrl} 
         title={`Preview do ${media.platform}`} 
-        className={`${mediaElementClass} border-0 pointer-events-none`}
-        style={{ objectFit: 'cover' }}
+        className="absolute top-0 left-0 w-full h-full border-0 pointer-events-none group-hover:scale-100 object-cover"
         allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
         loading="lazy" 
         scrolling="no"

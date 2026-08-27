@@ -1,6 +1,7 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Search, MapPin, Users, Shield } from 'lucide-react';
-import type { Team } from '../pages/t_equipas';
+import type { Team } from '../pages/TeamManagement';
 
 interface AllTeamsSectionProps {
   teams: Team[];
@@ -31,7 +32,7 @@ export function AllTeamsSection({
             type="text"
             value={searchValue}
             onChange={(e) => onSearchChange(e.target.value)}
-            placeholder="Pesquisar equipa ou cidade..."
+            placeholder="Pesquisar equipa ou província..."
             className="w-full rounded-full border border-slate-200 bg-white py-2 pl-9 pr-4 text-sm text-slate-700 outline-none transition-colors focus:border-blue-500 shadow-sm"
           />
         </div>
@@ -46,14 +47,15 @@ export function AllTeamsSection({
         /* GRELHA DE EQUIPAS */
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
           {teams.map((team) => {
-            // Acesso totalmente tipado sem 'any'
-            const teamImage = team.logo || team.photo || team.avatarUrl;
+            const teamImage = team.logo;
             const hasFailed = failedImages[team.id];
 
             return (
-              <div
+              <Link
                 key={team.id}
-                className="flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition-all hover:border-slate-300 hover:shadow-md"
+                to={`/admin/equipas/${team.id}`}
+                state={{ team }} /* 💡 AQUI TAMBÉM: Passamos os dados completos */
+                className="group flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition-all hover:border-blue-400 hover:shadow-md cursor-pointer"
               >
                 <div>
                   {/* CABEÇALHO DO CARD COM EMBLEMA */}
@@ -69,7 +71,7 @@ export function AllTeamsSection({
                       ) : (
                         <div
                           className="flex h-full w-full items-center justify-center font-bold text-xs text-white"
-                          style={{ backgroundColor: team.color || '#64748b' }}
+                          style={{ backgroundColor: team.color }}
                         >
                           {team.initials}
                         </div>
@@ -77,7 +79,7 @@ export function AllTeamsSection({
                     </div>
 
                     <div className="min-w-0 flex-1">
-                      <h4 className="truncate font-bold text-slate-900" title={team.name}>
+                      <h4 className="truncate font-bold text-slate-900 group-hover:text-blue-600 transition-colors" title={team.name}>
                         {team.name}
                       </h4>
                       <p className="flex items-center gap-1 text-xs text-slate-500">
@@ -113,7 +115,7 @@ export function AllTeamsSection({
                     {team.initials}
                   </span>
                 </div>
-              </div>
+              </Link>
             );
           })}
         </div>

@@ -14,6 +14,8 @@ import TeamManagement from "./pages/TeamManagement";
 import T_Details from "./pages/t_details";
 import Newplay from "./pages/newplay";
 import NewPartida from "./pages/newpartida";
+import EditTeamPage from "./Dashboard/EditTeamPage";
+import TeamDetailsPage from "./Dashboard/TeamDetailsPage";
 
 export const router = createBrowserRouter([
   // Rotas Públicas (Visitantes)
@@ -44,6 +46,7 @@ export const router = createBrowserRouter([
       { path: "/admin/newpartida", element: <NewPartida /> },
       { path: "/admin/jogadores", element: <T_jogadores /> },
       { path: "/admin/equipas", element: <TeamManagement /> },
+      { path: "/admin/equipas/:id", element: <TeamDetailsPage /> },
       { path: "/admin/equipas/detalhes/:id", element: <T_Details /> },
       { path: "/admin/publications/:id", element: <PublicationWatch /> }
     ]

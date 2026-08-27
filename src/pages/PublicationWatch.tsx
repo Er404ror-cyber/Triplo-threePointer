@@ -122,35 +122,51 @@ export default function PublicationWatch() {
     }
   };
 
-  if (isLoading) return <div className="h-screen flex items-center justify-center text-slate-500 dark:text-slate-400 bg-white dark:bg-[#0f0f0f]">A carregar publicação...</div>;
-  if (!currentPost) return <div className="p-12 text-center text-slate-500 dark:text-slate-400 bg-white dark:bg-[#0f0f0f] h-screen">Publicação não encontrada.</div>;
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-slate-500 dark:text-slate-400 bg-[#f9f9f9] dark:bg-[#0f0f0f]">
+        <div className="animate-pulse flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-4 border-slate-300 border-t-blue-500 rounded-full animate-spin"></div>
+          <p className="text-sm font-medium">A carregar publicação...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!currentPost) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-slate-500 dark:text-slate-400 bg-[#f9f9f9] dark:bg-[#0f0f0f]">
+        <p className="text-lg font-medium">Publicação não encontrada.</p>
+      </div>
+    );
+  }
 
   const currentHasLiked = currentPost.likes?.some(l => l.device_id === deviceId) || false;
 
   return (
-    <div className="w-full overflow-x-hidden bg-white dark:bg-[#0f0f0f] min-h-screen transition-colors duration-300 relative">
+    <div className="w-full bg-white dark:bg-[#0f0f0f] min-h-screen transition-colors duration-300 relative">
       <WatchHeader />
 
-      {/* Ajustei o padding no mobile para o vídeo tocar nas bordas laterais */}
-      <div className="max-w-[1800px] mx-auto pb-16 pt-4 lg:pt-6 text-slate-900 dark:text-white px-0 lg:px-4">
+      <div className="max-w-[1600px] mx-auto pb-16 pt-0 lg:pt-6 text-slate-900 dark:text-white px-0 lg:px-6 xl:px-8">
         
         <div className="flex flex-col lg:grid lg:grid-cols-12 lg:gap-8">
           
-          <div className="lg:col-span-8 w-full min-w-0 flex flex-col">
+          {/* Lado Esquerdo: Player + Informações + Comentários */}
+          <div className="lg:col-span-8 2xl:col-span-9 w-full min-w-0 flex flex-col">
             
-           {/* --- ÁREA DO VÍDEO CORRIGIDA --- */}
-           <div className="w-full relative lg:mb-5 bg-black lg:rounded-2xl overflow-hidden shadow-sm lg:shadow-md border-y lg:border border-slate-200/50 dark:border-white/5 z-0">
+            {/* Player sem margens no mobile, com bordas arredondadas no desktop */}
+            <div className="w-full relative bg-black lg:rounded-2xl overflow-hidden shadow-sm lg:shadow-md border-y lg:border border-transparent lg:border-slate-200/50 dark:lg:border-white/10 z-0">
               <AdvancedPlayer mediaUrl={currentPost.media_url} mediaType={currentPost.media_type} />
             </div>
             
-            <div className="pt-3 lg:pt-0 z-10 px-4 lg:px-0">
+            <div className="pt-4 lg:pt-5 z-10 px-4 lg:px-0">
               <PostInfo 
                 post={currentPost} 
                 hasLiked={currentHasLiked} 
                 onLike={() => handleLikeAntiSpam(currentPost.id, currentHasLiked)} 
               />
               
-              <div className="mt-6 w-full">
+              <div className="mt-8 w-full border-t border-slate-100 dark:border-white/10 pt-6">
                 <CommentsSection 
                   post={currentPost} 
                   deviceId={deviceId} 
@@ -161,7 +177,8 @@ export default function PublicationWatch() {
             </div>
           </div>
 
-          <div className="lg:col-span-4 px-4 lg:px-0 pt-8 lg:pt-0 border-t border-slate-200 dark:border-white/10 lg:border-none mt-8 lg:mt-0">
+          {/* Lado Direito: Vídeos Relacionados */}
+          <div className="lg:col-span-4 2xl:col-span-3 px-4 lg:px-0 pt-8 lg:pt-0 border-t border-slate-100 dark:border-white/10 lg:border-none mt-8 lg:mt-0">
             <RelatedSidebar posts={fallbackRecommendations} />
           </div>
 
