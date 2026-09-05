@@ -1,71 +1,116 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback, memo } from 'react';
 import { useTranslate } from '../../context/LanguageProvider';
 
-interface NameModalProps {
+export interface NameModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (name: string) => void;
 }
 
-export const NameModal: React.FC<NameModalProps> = ({ isOpen, onClose, onSave }) => {
+const NameModalComponent = ({ isOpen, onClose, onSave }: NameModalProps) => {
   const { t } = useTranslate();
   const [name, setName] = useState('');
 
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    },
+    [onClose]
+  );
+
+  useEffect(() => {
+    if (!isOpen) {
+      setName('');
+      return;
+    }
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, handleKeyDown]);
+
   if (!isOpen) return null;
 
+  const isSaveDisabled = !name.trim();
+
   const handleSave = () => {
-    if (name.trim()) {
-      onSave(name);
+    const trimmed = name.trim();
+    if (trimmed) {
+      onSave(trimmed);
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50 transition-opacity">
-      <div className="bg-white dark:bg-[#212121] rounded-2xl max-w-sm w-full p-6 shadow-2xl flex flex-col gap-2">
-        
-        <h3 className="text-xl font-bold text-[#0f0f0f] dark:text-[#f1f1f1]">
-          {t('modalNameTitle')}
-        </h3>
-        
-        <p className="text-[14px] text-[#606060] dark:text-[#aaaaaa] leading-relaxed mb-4">
-          {t('modalNameSubtitle')}
-        </p>
-        
-        <div className="relative w-full mb-6">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-name-title"
+      className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 select-none"
+      onClick={onClose}
+    >
+      {/* Card Soft Clean: Zero sombras pesadas, apenas superfícies limpas e bordas de 1px */}
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-sm p-6 rounded-2xl flex flex-col gap-4 bg-[#f8fafc] dark:bg-[#181a20] border border-slate-200/80 dark:border-white/10"
+      >
+        <div className="flex flex-col gap-1">
+          <h3
+            id="modal-name-title"
+            className="text-base font-semibold text-slate-900 dark:text-slate-100 tracking-tight"
+          >
+            {t('modalNameTitle')}
+          </h3>
+
+          <p className="text-xs text-slate-500 dark:text-slate-400 leading-normal">
+            {t('modalNameSubtitle')}
+          </p>
+        </div>
+
+        {/* Input Suave e Leve */}
+        <div className="relative w-full">
           <input
             type="text"
             maxLength={30}
             value={name}
             placeholder={t('placeholderYourName')}
             onChange={(e) => setName(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSave()}
-            className="w-full bg-transparent border-b border-black/20 dark:border-white/20 py-2 text-[15px] text-[#0f0f0f] dark:text-[#f1f1f1] focus:outline-none focus:border-[#065fd4] dark:focus:border-[#3ea6ff] transition-colors placeholder:text-[#606060] dark:placeholder:text-[#aaaaaa]"
+            onKeyDown={(e) => e.key === 'Enter' && !isSaveDisabled && handleSave()}
+            className="w-full px-3.5 py-2.5 rounded-xl text-sm font-medium bg-slate-200/50 dark:bg-[#222630] text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 border border-transparent focus:border-blue-500 dark:focus:border-blue-400 outline-none transition-colors duration-100"
             autoFocus
           />
-          {/* Indicador de limite de caracteres semelhante ao do YouTube */}
-          <span className={`absolute right-0 bottom-2 text-[12px] font-medium transition-colors ${name.length >= 30 ? 'text-red-500' : 'text-transparent'}`}>
+
+          <span
+            className={`absolute right-3 top-1/2 -translate-y-1/2 text-[11px] font-mono select-none ${
+              name.length >= 25 ? 'text-rose-500 font-semibold' : 'text-slate-400 dark:text-slate-600'
+            }`}
+          >
             {name.length}/30
           </span>
         </div>
 
-        <div className="flex gap-3 justify-end mt-2">
-          <button 
-            onClick={onClose} 
-            className="px-4.5 py-2 rounded-full text-sm font-semibold text-[#0f0f0f] dark:text-[#f1f1f1] hover:bg-black/5 dark:hover:bg-white/10 transition-all active:scale-95"
+        {/* Ações */}
+        <div className="flex gap-2.5 justify-end items-center pt-1">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-white/5 active:bg-slate-300/60 dark:active:bg-white/10 transition-colors duration-75 outline-none"
           >
             {t('actionCancel')}
           </button>
-          
-          <button 
-            onClick={handleSave} 
-            disabled={!name.trim()}
-            className="px-4.5 py-2 rounded-full text-sm font-semibold bg-[#065fd4] dark:bg-[#3ea6ff] text-white dark:text-[#0f0f0f] hover:bg-blue-700 dark:hover:bg-[#65b8ff] disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95 shadow-sm"
+
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={isSaveDisabled}
+            className="px-5 py-2 rounded-xl text-xs font-semibold text-white bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 active:bg-blue-800 disabled:opacity-40 disabled:pointer-events-none transition-colors duration-75 outline-none"
           >
             {t('actionSave')}
           </button>
         </div>
-        
       </div>
     </div>
   );
 };
+
+export const NameModal = memo(NameModalComponent);
+NameModal.displayName = 'NameModal';
+
+export default NameModal;

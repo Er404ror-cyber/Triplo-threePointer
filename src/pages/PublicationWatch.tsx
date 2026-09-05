@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabaseClient';
@@ -9,184 +9,297 @@ import { CommentsSection } from '../components/watch/CommentsSection';
 import { RelatedSidebar } from '../components/watch/RelatedSidebar';
 import { NameModal } from '../components/watch/NameModal';
 import { WatchHeader } from '../components/watch/WatchHeader';
+import { useTranslate } from '../context/LanguageProvider';
+
+interface PendingComment {
+  postId: string;
+  content: string;
+}
 
 export default function PublicationWatch() {
   const { id } = useParams<{ id: string }>();
   const queryClient = useQueryClient();
+  const { t } = useTranslate();
 
-  const [deviceId, setDeviceId] = useState<string>('');
-  const [userName, setUserName] = useState<string>('');
-  const [isNameModalOpen, setIsNameModalOpen] = useState(false);
-  const [pendingComment, setPendingComment] = useState<{ postId: string; content: string } | null>(null);
-
-  const likeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
+  // 1. Identificadores do visitante com inicialização única em memória
+  const [deviceId] = useState<string>(() => {
+    if (typeof window === 'undefined') return '';
     let localId = localStorage.getItem('visitor_device_id');
     if (!localId) {
       localId = crypto.randomUUID();
       localStorage.setItem('visitor_device_id', localId);
     }
-    setDeviceId(localId);
+    return localId;
+  });
 
-    const savedName = localStorage.getItem('visitor_user_name');
-    if (savedName) setUserName(savedName);
+  const [userName, setUserName] = useState<string>(() => {
+    if (typeof window === 'undefined') return '';
+    return localStorage.getItem('visitor_user_name') || '';
+  });
+
+  const [isNameModalOpen, setIsNameModalOpen] = useState(false);
+  
+  // Rascunho de comentário salvo no sessionStorage para não perder digitação
+  const [pendingComment, setPendingComment] = useState<PendingComment | null>(() => {
+    if (typeof window === 'undefined') return null;
+    const saved = sessionStorage.getItem('pending_watch_comment');
+    return saved ? JSON.parse(saved) : null;
+  });
+
+  useEffect(() => {
+    if (pendingComment) {
+      sessionStorage.setItem('pending_watch_comment', JSON.stringify(pendingComment));
+    } else {
+      sessionStorage.removeItem('pending_watch_comment');
+    }
+  }, [pendingComment]);
+
+  // Fila de likes persistida em ref: não bloqueia renders e sobrevive a navegações rápidas
+  const pendingLikesRef = useRef<Map<string, { currentHasLiked: boolean; timer: ReturnType<typeof setTimeout> }>>(new Map());
+
+  useEffect(() => {
+    const activeLikes = pendingLikesRef.current;
+    return () => {
+      activeLikes.forEach(({ timer }) => clearTimeout(timer));
+    };
   }, []);
 
-  const { data: posts = [], isLoading } = useQuery<PostWithRelations[]>({
-    queryKey: ['posts'],
+  // 2. API Post Principal: Ordenação direta no SQL do Supabase (poupa CPU do cliente)
+  const { data: currentPost, isLoading: isLoadingCurrent } = useQuery<PostWithRelations | null>({
+    queryKey: ['post', id],
     queryFn: async () => {
-      const { data } = await supabase.from('posts').select('*, comments(*), likes(device_id)').order('created_at', { ascending: false });
-      if (!data) return [];
-      return data.map((post: any) => ({
-        ...post,
-        comments: post.comments ? post.comments.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()) : []
-      })) as PostWithRelations[];
+      if (!id) return null;
+      const { data, error } = await supabase
+        .from('posts')
+        .select('*, comments(*), likes(device_id)')
+        .eq('id', id)
+        .order('created_at', { foreignTable: 'comments', ascending: false })
+        .maybeSingle();
+
+      if (error || !data) return null;
+      return data as PostWithRelations;
     },
-    enabled: !!deviceId,
-    staleTime: 1000 * 60 * 15,
+    enabled: Boolean(id),
+    staleTime: 1000 * 60 * 15,       // 15 minutos sem refetch desnecessário
+    gcTime: 1000 * 60 * 60,          // 1 hora no cache de memória
+    refetchOnWindowFocus: false,     // Poupa bateria ao trocar de aba
+    refetchOnReconnect: false,
   });
 
-  const currentPost = posts.find((p) => p.id === id);
-  
-  const fallbackRecommendations = posts
-    .filter((p) => p.id !== id)
-    .sort((a, b) => {
-      const aIsType = a.type === currentPost?.type ? 1 : 0;
-      const bIsType = b.type === currentPost?.type ? 1 : 0;
-      return bIsType - aIsType;
-    });
+  // 3. API Sidebar: Chave estática e payload mínimo (poupa transferência de dados móveis)
+  const { data: rawSidebar = [] } = useQuery<PostWithRelations[]>({
+    queryKey: ['sidebar_posts_list'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('posts')
+        .select('id, title, type, media_url, media_type, created_at')
+        .limit(12);
 
-  const handleLikeAntiSpam = (postId: string, currentHasLiked: boolean) => {
-    queryClient.setQueryData(['posts'], (old: any) =>
-      old.map((p: any) => {
-        if (p.id !== postId) return p;
-        const currentLikes = p.likes || [];
+      if (error || !data) return [];
+      return data as PostWithRelations[];
+    },
+    staleTime: 1000 * 60 * 30,
+    gcTime: 1000 * 60 * 60,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+  });
+
+  const sidebarPosts = useMemo(() => {
+    return rawSidebar.filter((p) => p.id !== id);
+  }, [rawSidebar, id]);
+
+  // 4. Like otimista à prova de spam e desacoplado de re-render
+  const handleLikeAntiSpam = useCallback(
+    (targetPostId: string, currentHasLiked: boolean) => {
+      if (!deviceId || !targetPostId) return;
+
+      queryClient.setQueryData<PostWithRelations | null>(['post', targetPostId], (old) => {
+        if (!old) return old;
+        const currentLikes = old.likes || [];
         return {
-          ...p,
+          ...old,
           likes: currentHasLiked
-            ? currentLikes.filter((l: any) => l.device_id !== deviceId)
-            : [...currentLikes, { device_id: deviceId }]
+            ? currentLikes.filter((l) => l.device_id !== deviceId)
+            : [...currentLikes, { device_id: deviceId }],
         };
-      })
-    );
+      });
 
-    if (likeTimeoutRef.current) clearTimeout(likeTimeoutRef.current);
+      const existing = pendingLikesRef.current.get(targetPostId);
+      if (existing) clearTimeout(existing.timer);
 
-    likeTimeoutRef.current = setTimeout(async () => {
-      try {
-        if (currentHasLiked) {
-          await supabase.from('likes').delete().eq('post_id', postId).eq('device_id', deviceId);
-        } else {
-          await supabase.from('likes').insert({ post_id: postId, device_id: deviceId });
+      const timer = setTimeout(async () => {
+        try {
+          if (currentHasLiked) {
+            await supabase.from('likes').delete().eq('post_id', targetPostId).eq('device_id', deviceId);
+          } else {
+            await supabase.from('likes').insert({ post_id: targetPostId, device_id: deviceId });
+          }
+        } catch {
+          queryClient.invalidateQueries({ queryKey: ['post', targetPostId] });
+        } finally {
+          pendingLikesRef.current.delete(targetPostId);
         }
-      } catch (error) {
-        console.error('Erro ao sincronizar like:', error);
-      }
-    }, 1000); 
-  };
+      }, 500);
 
+      pendingLikesRef.current.set(targetPostId, { currentHasLiked, timer });
+    },
+    [deviceId, queryClient]
+  );
+
+  // 5. Mutação de Comentários com rollback otimista
   const commentMutation = useMutation({
     mutationFn: async ({ postId, content, name }: { postId: string; content: string; name: string }) => {
-      await supabase.from('comments').insert({ post_id: postId, content, user_name: name, device_id: deviceId });
+      const { error } = await supabase
+        .from('comments')
+        .insert({ post_id: postId, content, user_name: name, device_id: deviceId });
+      if (error) throw error;
     },
     onMutate: async ({ postId, content, name }) => {
-      await queryClient.cancelQueries({ queryKey: ['posts'] });
-      const previous = queryClient.getQueryData(['posts']);
-      queryClient.setQueryData(['posts'], (old: any) =>
-        old.map((p: any) => p.id !== postId ? p : { ...p, comments: [{ id: crypto.randomUUID(), content, user_name: name, device_id: deviceId, created_at: new Date().toISOString() }, ...(p.comments || [])] })
-      );
-      return { previous };
+      await queryClient.cancelQueries({ queryKey: ['post', postId] });
+      const previousPost = queryClient.getQueryData<PostWithRelations>(['post', postId]);
+
+      queryClient.setQueryData<PostWithRelations | null>(['post', postId], (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          comments: [
+            {
+              id: crypto.randomUUID(),
+              post_id: postId,
+              content,
+              user_name: name,
+              device_id: deviceId,
+              created_at: new Date().toISOString(),
+            },
+            ...(old.comments || []),
+          ],
+        };
+      });
+
+      return { previousPost };
     },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ['posts'] }),
+    onError: (_err, vars, ctx) => {
+      if (ctx?.previousPost) {
+        queryClient.setQueryData(['post', vars.postId], ctx.previousPost);
+      }
+    },
+    onSettled: (_data, _error, vars) => {
+      queryClient.invalidateQueries({ queryKey: ['post', vars.postId] });
+    },
   });
 
-  const handleIntentToComment = (content: string) => {
-    if (!currentPost) return;
-    if (!userName.trim()) {
-      setPendingComment({ postId: currentPost.id, content });
-      setIsNameModalOpen(true);
-      return;
-    }
-    commentMutation.mutate({ postId: currentPost.id, content, name: userName });
-  };
+  const handleIntentToComment = useCallback(
+    (content: string) => {
+      if (!currentPost) return;
+      if (!userName.trim()) {
+        setPendingComment({ postId: currentPost.id, content });
+        setIsNameModalOpen(true);
+        return;
+      }
+      commentMutation.mutate({ postId: currentPost.id, content, name: userName });
+    },
+    [currentPost, userName, commentMutation]
+  );
 
-  const handleSaveNameModal = (name: string) => {
-    const trimmed = name.trim();
-    if (trimmed && pendingComment) {
+  const handleSaveNameModal = useCallback(
+    (name: string) => {
+      const trimmed = name.trim();
+      if (!trimmed) return;
+
       setUserName(trimmed);
       localStorage.setItem('visitor_user_name', trimmed);
       setIsNameModalOpen(false);
-      commentMutation.mutate({ postId: pendingComment.postId, content: pendingComment.content, name: trimmed });
-      setPendingComment(null);
-    }
-  };
 
-  if (isLoading) {
+      if (pendingComment) {
+        commentMutation.mutate({
+          postId: pendingComment.postId,
+          content: pendingComment.content,
+          name: trimmed,
+        });
+        setPendingComment(null);
+      }
+    },
+    [pendingComment, commentMutation]
+  );
+
+  const handleCloseModal = useCallback(() => {
+    setIsNameModalOpen(false);
+  }, []);
+
+  if (isLoadingCurrent) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-slate-500 dark:text-slate-400 bg-[#f9f9f9] dark:bg-[#0f0f0f]">
-        <div className="animate-pulse flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-4 border-slate-300 border-t-blue-500 rounded-full animate-spin"></div>
-          <p className="text-sm font-medium">A carregar publicação...</p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-[#f7f9fc] dark:bg-[#0c0e14]">
+        <div className="w-6 h-6 border-2 border-slate-300 dark:border-slate-700 border-t-indigo-600 rounded-full animate-spin" />
       </div>
     );
   }
 
   if (!currentPost) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-slate-500 dark:text-slate-400 bg-[#f9f9f9] dark:bg-[#0f0f0f]">
-        <p className="text-lg font-medium">Publicação não encontrada.</p>
+      <div className="min-h-screen flex items-center justify-center bg-[#f7f9fc] dark:bg-[#0c0e14]">
+        <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+          {t('publicationNotFound')}
+        </p>
       </div>
     );
   }
 
-  const currentHasLiked = currentPost.likes?.some(l => l.device_id === deviceId) || false;
+  const currentHasLiked = currentPost.likes?.some((l) => l.device_id === deviceId) || false;
 
   return (
-    <div className="w-full bg-white dark:bg-[#0f0f0f] min-h-screen transition-colors duration-300 relative">
+    <div className="w-full bg-[#f9f6f0] dark:bg-[#0c0e14] min-h-screen text-slate-800 dark:text-[#e2e8f0]">
       <WatchHeader />
 
-      <div className="max-w-[1600px] mx-auto pb-16 pt-0 lg:pt-6 text-slate-900 dark:text-white px-0 lg:px-6 xl:px-8">
-        
-        <div className="flex flex-col lg:grid lg:grid-cols-12 lg:gap-8">
+      <main className="max-w-[1560px] mx-auto pb-12 pt-0 lg:pt-4 px-0 lg:px-6">
+        <div className="flex flex-col lg:grid lg:grid-cols-12 lg:gap-6">
           
-          {/* Lado Esquerdo: Player + Informações + Comentários */}
+          {/* Lado Esquerdo: Player + Conteúdo */}
           <div className="lg:col-span-8 2xl:col-span-9 w-full min-w-0 flex flex-col">
             
-            {/* Player sem margens no mobile, com bordas arredondadas no desktop */}
-            <div className="w-full relative bg-black lg:rounded-2xl overflow-hidden shadow-sm lg:shadow-md border-y lg:border border-transparent lg:border-slate-200/50 dark:lg:border-white/10 z-0">
-              <AdvancedPlayer mediaUrl={currentPost.media_url} mediaType={currentPost.media_type} />
+            {/* Player Container: Flexível sem aspect ratio fixo (evita cortes) e sem repaints na GPU */}
+            <div 
+              className="w-full bg-black lg:rounded-xl overflow-hidden border-y lg:border border-slate-200 dark:border-[#1a1e27] flex items-center justify-center min-h-[220px] sm:min-h-[360px] md:min-h-[440px]"
+              style={{ contain: 'layout style' }}
+            >
+              <div className="w-full h-full flex items-center justify-center">
+                <AdvancedPlayer mediaUrl={currentPost.media_url} mediaType={currentPost.media_type} />
+              </div>
             </div>
-            
-            <div className="pt-4 lg:pt-5 z-10 px-4 lg:px-0">
-              <PostInfo 
-                post={currentPost} 
-                hasLiked={currentHasLiked} 
-                onLike={() => handleLikeAntiSpam(currentPost.id, currentHasLiked)} 
+
+            <div className="pt-4 px-4 lg:px-0">
+              <PostInfo
+                post={currentPost}
+                hasLiked={currentHasLiked}
+                onLike={() => handleLikeAntiSpam(currentPost.id, currentHasLiked)}
               />
-              
-              <div className="mt-8 w-full border-t border-slate-100 dark:border-white/10 pt-6">
-                <CommentsSection 
-                  post={currentPost} 
-                  deviceId={deviceId} 
-                  userName={userName} 
-                  onSubmit={handleIntentToComment} 
+
+              <div className="mt-6 border-t border-slate-200 dark:border-[#1a1e27] pt-5">
+                <CommentsSection
+                  post={currentPost}
+                  deviceId={deviceId}
+                  userName={userName}
+                  onSubmit={handleIntentToComment}
                 />
               </div>
             </div>
           </div>
 
-          {/* Lado Direito: Vídeos Relacionados */}
-          <div className="lg:col-span-4 2xl:col-span-3 px-4 lg:px-0 pt-8 lg:pt-0 border-t border-slate-100 dark:border-white/10 lg:border-none mt-8 lg:mt-0">
-            <RelatedSidebar posts={fallbackRecommendations} />
-          </div>
+          {/* Lado Direito: Sidebar com contenção de renderização para bateria e GPU */}
+          <aside 
+            className="lg:col-span-4 2xl:col-span-3 px-4 lg:px-0 pt-6 lg:pt-0 border-t border-slate-200 dark:border-[#1a1e27] lg:border-none mt-6 lg:mt-0"
+            style={{ contentVisibility: 'auto', containIntrinsicSize: '0 600px' }}
+          >
+            <RelatedSidebar posts={sidebarPosts} />
+          </aside>
 
         </div>
+      </main>
 
-      </div>
-
-      <NameModal isOpen={isNameModalOpen} onClose={() => setIsNameModalOpen(false)} onSave={handleSaveNameModal} />
+      <NameModal
+        isOpen={isNameModalOpen}
+        onClose={handleCloseModal}
+        onSave={handleSaveNameModal}
+      />
     </div>
   );
 }

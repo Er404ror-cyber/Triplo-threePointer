@@ -162,11 +162,66 @@ actionComment: "Comentar",
 watchYou: "TU",
 watchShowMoreComments: "Mostrar mais {n} comentários",
 
-modalNameTitle: "Como te chamas?",
-modalNameSubtitle: "Junta-te à conversa. Só precisas de inserir o teu nome uma vez.",
+
 placeholderYourName: "O teu nome...",
 actionSave: "Guardar",
+
+
+actionLike: "Gostar",
+  actionLiked: "Gostou",
+  actionSharing: "A preparar...",
+  ariaActionLike: "Gostar desta publicação",
+  ariaActionUnlike: "Remover gosto da publicação",
+  ariaActionShare: "Partilhar publicação",
+  toastLinkCopied: "Link com prévia copiado com sucesso!",
+  shareBadgeReactions: "reações",
+  shareCtaPrompt: "Veja o conteúdo completo aqui:",
+  sidebarAria: "Publicações recomendadas",
+  recommendationsCount: "recomendações",
+  openPostAria: "Ver publicação: {{title}}",
+  likesCountAria: "{{count}} gostos",
+  postInitial: "P",
+  
+  audio: "Áudio",
+
+
+
+
+
+
+
+
+
+
+
+  // Modal de Nome
+  modalNameTitle: "Como quer ser chamado?",
+  modalNameSubtitle: "Introduza o seu nome ou alcunha para personalizar a sua experiência.",
+  
+  footerAllRightsReserved: "Todos os direitos reservados.",
+  footerAbout: "Sobre",
+  footerPrivacy: "Privacidade",
+  footerTerms: "Termos",
+  footerContact: "Contacto"
   },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   en: {
     home: "Home",
     publications: "Publications",
@@ -328,11 +383,44 @@ actionCancel: "Cancel",
 actionComment: "Comment",
 watchYou: "YOU",
 watchShowMoreComments: "Show {n} more comments",
-modalNameTitle: "What's your name?",
-modalNameSubtitle: "Join the conversation. You only need to enter your name once.",
+
 placeholderYourName: "Your name...",
 actionSave: "Save",
 
+
+
+
+actionLike: "Like",
+  actionLiked: "Liked",
+  actionSharing: "Preparing...",
+  ariaActionLike: "Like this post",
+  ariaActionUnlike: "Unlike this post",
+  ariaActionShare: "Share post",
+  toastLinkCopied: "Link with preview copied successfully!",
+  shareBadgeReactions: "reactions",
+  shareCtaPrompt: "Check out the full content here:",
+
+
+
+
+
+  sidebarAria: "Recommended posts",
+  recommendationsCount: "recommendations",
+  openPostAria: "View post: {{title}}",
+  likesCountAria: "{{count}} likes",
+  postInitial: "P",
+ 
+  audio: "Audio",
+
+
+  modalNameTitle: "What should we call you?",
+  modalNameSubtitle: "Enter your name or nickname to personalize your experience.",
+  footerAllRightsReserved: "All rights reserved.",
+footerAbout: "About",
+footerPrivacy: "Privacy",
+footerTerms: "Terms",
+footerContact: "Contact"
+  
 
 
   },
