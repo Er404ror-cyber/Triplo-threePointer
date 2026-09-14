@@ -30,6 +30,14 @@ export default function AdminLayout({ session }: AdminLayoutProps) {
         
         <nav className="flex-1 p-4 space-y-2">
           <Link 
+            to="/admin/dashboard" 
+            className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-800 transition" 
+            onClick={() => setIsSidebarOpen(false)}
+          >    
+            <BlocksIcon size={20} /> 
+            <span>{t('dashboard')}</span>
+          </Link>
+          <Link 
             to="/admin" 
             className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-800 transition" 
             onClick={() => setIsSidebarOpen(false)}
@@ -38,24 +46,7 @@ export default function AdminLayout({ session }: AdminLayoutProps) {
             <span>{t('nav.publications')}</span>
           </Link>
 
-          <Link 
-            to="/admin/dashboard" 
-            className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-800 transition" 
-            onClick={() => setIsSidebarOpen(false)}
-          >    
-            <BlocksIcon size={20} /> 
-            <span>{t('dashboard')}</span>
-          </Link>
 
-          <Link 
-            to="/admin/jogadores" 
-            className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-800 transition" 
-            onClick={() => setIsSidebarOpen(false)}
-          >
-            <Users size={20} />
-            <span>{t('Jogadores')}</span>
-          </Link>
-       
           <Link 
             to="/admin/equipas" 
             className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-800 transition" 
@@ -65,6 +56,15 @@ export default function AdminLayout({ session }: AdminLayoutProps) {
             <span>{t('Equipas')}</span>
           </Link>
           
+          <Link 
+            to="/admin/jogadores" 
+            className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-800 transition" 
+            onClick={() => setIsSidebarOpen(false)}
+          >
+            <Users size={20} />
+            <span>{t('Jogadores')}</span>
+          </Link>
+       
           <Link 
             to="/" 
             className="flex items-center gap-3 p-3 rounded-lg hover:bg-slate-800 transition text-slate-400"

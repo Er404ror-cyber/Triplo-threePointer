@@ -1,6 +1,7 @@
 import { Calendar, MapPin } from "lucide-react";
 import ErrorAlert from "./ErrorAlert";
-import { ALL_TEAMS } from "../pages/t_equipas"; // Ajuste o caminho se necessário
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "../lib/supabaseClient"; // Ajuste o caminho se necessário
 
 const DIVISIONS = ["1ª Divisão", "2ª Divisão"];
 
@@ -50,6 +51,20 @@ export default function MatchForm({ formData, actions }: MatchFormProps) {
     handleSubmit,
   } = actions;
 
+  // Busca as equipas diretamente ao Supabase
+  const { data: teams = [], isLoading: loadingTeams } = useQuery({
+    queryKey: ['teams-list'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('teams')
+        .select('id, name')
+        .order('name'); // Ordena alfabeticamente para facilitar a seleção
+      
+      if (error) throw error;
+      return data;
+    }
+  });
+
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       {error && <ErrorAlert message={error} />}
@@ -65,9 +80,12 @@ export default function MatchForm({ formData, actions }: MatchFormProps) {
             onChange={(e) => setHomeTeamId(e.target.value)}
             className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-blue-400"
             required
+            disabled={loadingTeams}
           >
-            <option value="">Selecione a equipa</option>
-            {ALL_TEAMS.map((team) => (
+            <option value="">
+              {loadingTeams ? "A carregar equipas..." : "Selecione a equipa"}
+            </option>
+            {teams.map((team) => (
               <option key={team.id} value={team.id}>
                 {team.name}
               </option>
@@ -84,9 +102,12 @@ export default function MatchForm({ formData, actions }: MatchFormProps) {
             onChange={(e) => setAwayTeamId(e.target.value)}
             className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-blue-400"
             required
+            disabled={loadingTeams}
           >
-            <option value="">Selecione a equipa</option>
-            {ALL_TEAMS.map((team) => (
+            <option value="">
+              {loadingTeams ? "A carregar equipas..." : "Selecione a equipa"}
+            </option>
+            {teams.map((team) => (
               <option key={team.id} value={team.id}>
                 {team.name}
               </option>

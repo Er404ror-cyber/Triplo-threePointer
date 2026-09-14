@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ALL_TEAMS } from "../pages/t_equipas"; // ajuste o caminho conforme onde t_equipas.tsx está salvo
  
 export const MAX_FIELD_LENGTH = 20;
 export const MAX_DESCRIPTION_LENGTH = 60;
@@ -35,14 +34,12 @@ export function useNewPlayerForm() {
       return;
     }
 
-    const selectedTeam = ALL_TEAMS.find((t) => t.id === teamId);
 
     const newPlayer = {
       name,
       age: Number(age),
       province,
       teamId,
-      teamName: selectedTeam?.name || "",
       category,
       height,
       description,

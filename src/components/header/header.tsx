@@ -15,8 +15,8 @@ export const Header = () => {
       to: "/publications",
     },
     {
-      label: "jogadores",
-      to: "/jogadores",
+      label: "PublicJogadores",
+      to: "/PublicJogadores",
     },
     {
       label: "admin",
@@ -56,87 +56,86 @@ export const Header = () => {
     };
   }, [isMenuOpen]);
 
+  // O React permite devolver múltiplos elementos lado-a-lado usando a tag vazia <> ... </>
   return (
-    <header
-      ref={headerRef}
-      /* 
-        SEM BLUR (ALTA PERFORMANCE):
-        1. bg-black/60 -> Transparência sem custo de renderização de desfoque
-        2. Removed do backdrop-blur para evitar overhead na GPU/CPU durante o scroll
-      */
-      className="fixed left-1/2 top-4 z-50 w-[94%] max-w-7xl -translate-x-1/2 rounded-2xl border border-white/10 bg-black/60 shadow-lg"
-    >
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-        <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white">
-            <span className="text-xs text-slate-300">O</span>
+    <>
+      {/* 1. O HEADER VERDADEIRO: Forçado para as bordas absolutas do ecrã */}
+      <header
+        ref={headerRef}
+        className="absolute left-0 top-0 z-50 w-full border-b border-white/10 bg-black/90 shadow-lg"
+      >
+        <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-4">
+          <div className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white">
+              <span className="text-xs text-slate-300">O</span>
+            </div>
+            <span className="text-lg tracking-widest text-slate-300">
+              T3P
+            </span>
           </div>
 
-          <span className="text-lg tracking-widest text-slate-300">
-            T3P
-          </span>
+          {/* Nav desktop */}
+          <nav className="hidden items-center gap-8 text-xs font-bold tracking-widest text-slate-300 md:flex">
+            {NAV_LINKS.map((link) => (
+              <Link
+                key={link.to}
+                to={link.to}
+                className="flex items-center uppercase text-slate-300 hover:text-white transition-colors"
+              >
+                {t(link.label)}
+              </Link>
+            ))}
+          </nav>
+
+          <div className="flex items-center gap-6 text-slate-300">
+            <div className="hidden items-center gap-6 md:flex">
+              <LanguageSwitcher />
+              <Info size={16} className="cursor-pointer hover:text-white transition-colors" />
+              <Phone size={16} className="cursor-pointer hover:text-white transition-colors" />
+            </div>
+
+            <button
+              onClick={() => setIsMenuOpen((prev) => !prev)}
+              aria-label={isMenuOpen ? "Fechar menu" : "Abrir menu"}
+              aria-expanded={isMenuOpen}
+              className="flex items-center justify-center rounded-full p-2 text-slate-300 hover:text-white md:hidden"
+            >
+              {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+          </div>
         </div>
 
-        {/* Nav desktop */}
-        <nav className="hidden items-center gap-8 text-xs font-bold tracking-widest text-slate-300 md:flex">
-          {NAV_LINKS.map((link) => (
-            <Link
-              key={link.to}
-              to={link.to}
-              className="flex items-center uppercase text-slate-300 hover:text-white transition-colors"
-            >
-              {t(link.label)}
-            </Link>
-          ))}
-        </nav>
+        {/* Menu mobile */}
+        {isMenuOpen && (
+          <nav className="absolute left-0 top-full w-full flex flex-col gap-2 border-b border-white/10 bg-black/95 px-6 py-5 shadow-xl md:hidden">
+            {NAV_LINKS.map((link) => (
+              <Link
+                key={link.to}
+                to={link.to}
+                onClick={() => setIsMenuOpen(false)}
+                className="rounded-lg px-3 py-4 text-sm font-bold uppercase tracking-widest text-slate-300 hover:bg-white/10 hover:text-white transition-colors"
+              >
+                {t(link.label)}
+              </Link>
+            ))}
 
-        <div className="flex items-center gap-6 text-slate-300">
-          {/* Ícones extra só aparecem no desktop */}
-          <div className="hidden items-center gap-6 md:flex">
-            <LanguageSwitcher />
-            <Info size={16} className="cursor-pointer hover:text-white transition-colors" />
-            <Phone size={16} className="cursor-pointer hover:text-white transition-colors" />
-          </div>
+            <div className="mt-3 flex items-center gap-4 border-t border-white/10 px-3 pt-5 text-slate-300">
+              <LanguageSwitcher />
+              <a href="#" className="flex items-center gap-2 py-2 hover:text-white transition-colors">
+                <Info size={18} />
+                <span className="text-sm font-bold uppercase tracking-widest">Info</span>
+              </a>
+              <a href="#" className="flex items-center gap-2 py-2 hover:text-white transition-colors">
+                <Phone size={18} />
+                <span className="text-sm font-bold uppercase tracking-widest">Contato</span>
+              </a>
+            </div>
+          </nav>
+        )}
+      </header>
 
-          {/* Botão hambúrguer — só em mobile */}
-          <button
-            onClick={() => setIsMenuOpen((prev) => !prev)}
-            aria-label={isMenuOpen ? "Fechar menu" : "Abrir menu"}
-            aria-expanded={isMenuOpen}
-            className="flex items-center justify-center rounded-full p-2 text-slate-300 hover:text-white md:hidden"
-          >
-            {isMenuOpen ? <X size={22} /> : <Menu size={22} />}
-          </button>
-        </div>
-      </div>
-
-      {/* Menu mobile — sem blur */}
-      {isMenuOpen && (
-        <nav className="flex flex-col gap-2 border-t border-white/10 bg-black/90 px-6 py-5 rounded-b-2xl md:hidden">
-          {NAV_LINKS.map((link) => (
-            <Link
-              key={link.to}
-              to={link.to}
-              onClick={() => setIsMenuOpen(false)}
-              className="rounded-lg px-3 py-4 text-sm font-bold uppercase tracking-widest text-slate-300 hover:bg-white/10 hover:text-white transition-colors"
-            >
-              {t(link.label)}
-            </Link>
-          ))}
-
-          <div className="mt-3 flex items-center gap-4 border-t border-white/10 px-3 pt-5 text-slate-300">
-            <LanguageSwitcher />
-            <a href="#" className="flex items-center gap-2 py-2 hover:text-white transition-colors">
-              <Info size={18} />
-              <span className="text-sm font-bold uppercase tracking-widest">Info</span>
-            </a>
-            <a href="#" className="flex items-center gap-2 py-2 hover:text-white transition-colors">
-              <Phone size={18} />
-              <span className="text-sm font-bold uppercase tracking-widest">Contato</span>
-            </a>
-          </div>
-        </nav>
-      )}
-    </header>
+      {/* 2. O ESPAÇADOR FANTASMA: Ocupa os 74px de altura do Header verdadeiro para não tapar o resto do site */}
+      <div className="h-[74px] w-full flex-shrink-0" aria-hidden="true"></div>
+    </>
   );
 };

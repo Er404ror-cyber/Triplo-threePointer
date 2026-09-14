@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, MapPin, Users, Shield } from 'lucide-react';
-import type { Team } from '../pages/TeamManagement';
+import type { Team } from '../Dashboard/TeamManagement';
 
 interface AllTeamsSectionProps {
   teams: Team[];

@@ -6,6 +6,7 @@ import type { PostType } from '../types/database';
 import type { PostWithRelations } from '../types/watch';
 import { SmartThumbnail } from '../components/watch/SmartThumbnail';
 import { useTranslate, type TranslationKey } from '../context/LanguageProvider';
+import { Header } from '../components/header/header';
 
 type SortOption = 'latest' | 'popular' | 'discussed';
 
@@ -64,6 +65,8 @@ const FeedItem = memo(
         tabIndex={0}
         onKeyDown={(e) => e.key === 'Enter' && onSelect(post)}
       >
+        {/* O <Header/> FOI REMOVIDO DAQUI para não se repetir em cada post */}
+        
         {/* Thumbnail Soft Flutuante */}
         <div className="w-full aspect-video rounded-3xl overflow-hidden relative bg-[#e3e7ee] dark:bg-[#1a1c22] shadow-[4px_6px_16px_rgba(163,177,198,0.35)] dark:shadow-[4px_6px_16px_rgba(0,0,0,0.5)]">
           <div className="w-full h-full group-hover:scale-105 transition-transform duration-300 ease-out">
@@ -164,7 +167,6 @@ export default function PublicationsFeed() {
     staleTime: 1000 * 60 * 15,
     gcTime: 1000 * 60 * 30,
     refetchOnWindowFocus: false,
-
   });
 
   const filteredAndSortedPosts = useMemo(() => {
@@ -216,97 +218,130 @@ export default function PublicationsFeed() {
   const locale = language === 'pt' ? 'pt-PT' : 'en-US';
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20 pt-4 bg-[#eef1f6] dark:bg-[#111215] min-h-screen text-slate-800 dark:text-slate-100 transition-colors">
+    // Reestruturámos a div principal para o fundo preencher toda a tela sem comprimir o Header
+    <div className="w-full bg-[#eef1f6] dark:bg-[#111215] min-h-screen text-slate-800 dark:text-slate-100 transition-colors pb-20">
       
-      {/* Busca Soft UI Estilo Neumórfico Inset */}
-      <div className="max-w-2xl mx-auto mb-8">
-        <div className="relative flex items-center bg-[#eef1f6] dark:bg-[#111215] rounded-2xl shadow-[inset_3px_3px_6px_rgba(163,177,198,0.5),inset_-3px_-3px_6px_rgba(255,255,255,0.8)] dark:shadow-[inset_3px_3px_6px_rgba(0,0,0,0.6),inset_-3px_-3px_6px_rgba(255,255,255,0.03)] px-3 py-1.5">
-          <span className="pl-2 text-[#c85a17] text-base select-none">
-            🏀
-          </span>
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={t('searchPlaceholder')}
-            className="w-full pl-3 pr-8 py-1.5 bg-transparent text-sm outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
-          />
-          {searchQuery && (
-            <button
-              type="button"
-              onClick={() => setSearchQuery('')}
-              className="mr-1 w-6 h-6 flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs rounded-full"
-            >
-              ✕
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Controles Flutuantes Soft */}
-      <div className="sticky top-0 z-20 bg-[#eef1f6]/90 dark:bg-[#111215]/90 py-3 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 mb-8 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+      {/* 1. O CABEÇALHO (Agora está no topo da página inteira, sozinho e isolado!) */}
+      <Header />
+      
+      {/* 2. O CONTEÚDO (Englobado no Max-Width para alinhar ao centro) */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8">
         
-        {/* Soft Chips */}
-        <div className="flex gap-2.5 overflow-x-auto no-scrollbar items-center py-1">
-          {(['all', 'post', 'event', 'treino', 'calendar'] as const).map((type) => {
-            const isActive = filter === type;
-            return (
+        {/* Busca Soft UI Estilo Neumórfico Inset */}
+        <div className="max-w-2xl mx-auto mb-8">
+          <div className="relative flex items-center bg-[#eef1f6] dark:bg-[#111215] rounded-2xl shadow-[inset_3px_3px_6px_rgba(163,177,198,0.5),inset_-3px_-3px_6px_rgba(255,255,255,0.8)] dark:shadow-[inset_3px_3px_6px_rgba(0,0,0,0.6),inset_-3px_-3px_6px_rgba(255,255,255,0.03)] px-3 py-1.5">
+            <span className="pl-2 text-[#c85a17] text-base select-none">
+              🏀
+            </span>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={t('searchPlaceholder')}
+              className="w-full pl-3 pr-8 py-1.5 bg-transparent text-sm outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
+            />
+            {searchQuery && (
               <button
-                key={type}
-                onClick={() => setFilter(type)}
-                className={`px-4 py-2 rounded-2xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-all duration-150 ${
-                  isActive
-                    ? 'bg-[#c85a17] text-white shadow-[3px_3px_8px_rgba(200,90,23,0.35)]'
-                    : 'bg-[#eef1f6] dark:bg-[#111215] text-slate-600 dark:text-slate-300 shadow-[3px_3px_6px_rgba(163,177,198,0.4),-3px_-3px_6px_rgba(255,255,255,0.8)] dark:shadow-[3px_3px_6px_rgba(0,0,0,0.5),-3px_-3px_6px_rgba(255,255,255,0.03)] hover:text-[#c85a17]'
-                }`}
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="mr-1 w-6 h-6 flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs rounded-full"
               >
-                {t(type as TranslationKey)}
+                ✕
               </button>
-            );
-          })}
-        </div>
-
-        {/* Dropdown de Ordenação */}
-        <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
-          <select
-            id="sort-select"
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as SortOption)}
-            aria-label={t('sortBy')}
-            className="bg-[#eef1f6] dark:bg-[#111215] shadow-[3px_3px_6px_rgba(163,177,198,0.4),-3px_-3px_6px_rgba(255,255,255,0.8)] dark:shadow-[3px_3px_6px_rgba(0,0,0,0.5),-3px_-3px_6px_rgba(255,255,255,0.03)] text-xs sm:text-sm text-slate-700 dark:text-slate-300 py-2 px-4 rounded-2xl outline-none cursor-pointer"
-          >
-            <option value="latest">{t('latest')}</option>
-            <option value="popular">{t('popular')}</option>
-            <option value="discussed">{t('discussed')}</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Feed Principal Sem Moldura */}
-      {isLoading ? (
-        <FeedSkeleton />
-      ) : filteredAndSortedPosts.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center px-4">
-          <div className="w-14 h-14 rounded-full bg-[#eef1f6] dark:bg-[#111215] shadow-[4px_4px_10px_rgba(163,177,198,0.4),-4px_-4px_10px_rgba(255,255,255,0.8)] dark:shadow-[4px_4px_10px_rgba(0,0,0,0.5),-4px_-4px_10px_rgba(255,255,255,0.03)] flex items-center justify-center text-[#c85a17] mb-3 text-2xl">
-            🏀
+            )}
           </div>
-          <p className="text-slate-500 dark:text-slate-400 font-medium text-sm">
-            {t('noResults')}
-          </p>
         </div>
-      ) : (
-        <div className="space-y-12">
-          {/* Seção 1: Recentes & Destaques */}
-          {isBrowsingAll && recentHighlightPosts.length > 0 && (
+
+        {/* Controles Flutuantes Soft */}
+        <div className="sticky top-0 z-20 bg-[#eef1f6]/90 dark:bg-[#111215]/90 py-3 -mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 mb-8 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+          
+          {/* Soft Chips */}
+          <div className="flex gap-2.5 overflow-x-auto no-scrollbar items-center py-1">
+            {(['all', 'post', 'event', 'treino', 'calendar'] as const).map((type) => {
+              const isActive = filter === type;
+              return (
+                <button
+                  key={type}
+                  onClick={() => setFilter(type)}
+                  className={`px-4 py-2 rounded-2xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-all duration-150 ${
+                    isActive
+                      ? 'bg-[#c85a17] text-white shadow-[3px_3px_8px_rgba(200,90,23,0.35)]'
+                      : 'bg-[#eef1f6] dark:bg-[#111215] text-slate-600 dark:text-slate-300 shadow-[3px_3px_6px_rgba(163,177,198,0.4),-3px_-3px_6px_rgba(255,255,255,0.8)] dark:shadow-[3px_3px_6px_rgba(0,0,0,0.5),-3px_-3px_6px_rgba(255,255,255,0.03)] hover:text-[#c85a17]'
+                  }`}
+                >
+                  {t(type as TranslationKey)}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Dropdown de Ordenação */}
+          <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+            <select
+              id="sort-select"
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as SortOption)}
+              aria-label={t('sortBy')}
+              className="bg-[#eef1f6] dark:bg-[#111215] shadow-[3px_3px_6px_rgba(163,177,198,0.4),-3px_-3px_6px_rgba(255,255,255,0.8)] dark:shadow-[3px_3px_6px_rgba(0,0,0,0.5),-3px_-3px_6px_rgba(255,255,255,0.03)] text-xs sm:text-sm text-slate-700 dark:text-slate-300 py-2 px-4 rounded-2xl outline-none cursor-pointer"
+            >
+              <option value="latest">{t('latest')}</option>
+              <option value="popular">{t('popular')}</option>
+              <option value="discussed">{t('discussed')}</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Feed Principal Sem Moldura */}
+        {isLoading ? (
+          <FeedSkeleton />
+        ) : filteredAndSortedPosts.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 text-center px-4">
+            <div className="w-14 h-14 rounded-full bg-[#eef1f6] dark:bg-[#111215] shadow-[4px_4px_10px_rgba(163,177,198,0.4),-4px_-4px_10px_rgba(255,255,255,0.8)] dark:shadow-[4px_4px_10px_rgba(0,0,0,0.5),-4px_-4px_10px_rgba(255,255,255,0.03)] flex items-center justify-center text-[#c85a17] mb-3 text-2xl">
+              🏀
+            </div>
+            <p className="text-slate-500 dark:text-slate-400 font-medium text-sm">
+              {t('noResults')}
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-12">
+            {/* Seção 1: Recentes & Destaques */}
+            {isBrowsingAll && recentHighlightPosts.length > 0 && (
+              <section>
+                <div className="flex items-center gap-2 mb-5 px-1">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#c85a17]" />
+                  <h2 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">
+                    {t('recentHighlights')}
+                  </h2>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-x-6 gap-y-10">
+                  {recentHighlightPosts.map((post) => (
+                    <FeedItem
+                      key={post.id}
+                      post={post}
+                      deviceId={deviceId}
+                      locale={locale}
+                      language={language}
+                      onSelect={handlePostClick}
+                      t={t}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Seção 2: Todas as Publicações */}
             <section>
-              <div className="flex items-center gap-2 mb-5 px-1">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#c85a17]" />
-                <h2 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">
-                  {t('recentHighlights')}
-                </h2>
-              </div>
+              {isBrowsingAll && remainingPosts.length > 0 && (
+                <div className="flex items-center gap-2 mb-5 px-1">
+                  <span className="w-2.5 h-2.5 rounded-full bg-slate-400 dark:bg-slate-600" />
+                  <h2 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
+                    {t('exploreAll')}
+                  </h2>
+                </div>
+              )}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-x-6 gap-y-10">
-                {recentHighlightPosts.map((post) => (
+                {remainingPosts.map((post) => (
                   <FeedItem
                     key={post.id}
                     post={post}
@@ -319,34 +354,9 @@ export default function PublicationsFeed() {
                 ))}
               </div>
             </section>
-          )}
-
-          {/* Seção 2: Todas as Publicações */}
-          <section>
-            {isBrowsingAll && remainingPosts.length > 0 && (
-              <div className="flex items-center gap-2 mb-5 px-1">
-                <span className="w-2.5 h-2.5 rounded-full bg-slate-400 dark:bg-slate-600" />
-                <h2 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">
-                  {t('exploreAll')}
-                </h2>
-              </div>
-            )}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-x-6 gap-y-10">
-              {remainingPosts.map((post) => (
-                <FeedItem
-                  key={post.id}
-                  post={post}
-                  deviceId={deviceId}
-                  locale={locale}
-                  language={language}
-                  onSelect={handlePostClick}
-                  t={t}
-                />
-              ))}
-            </div>
-          </section>
-        </div>
-      )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Plus, Shield, Trophy, Loader2, AlertCircle } from 'lucide-react'; // 💡 Importei o AlertCircle
+import { Plus, Trophy, Loader2, AlertCircle } from 'lucide-react'; 
 import { supabase } from '../lib/supabaseClient';
 import type { Team } from '../types/useTeamForm';
 import { TopTeamsGrid } from '../components/TopTeamsGrid';
@@ -17,26 +17,41 @@ export default function TeamManagement() {
   const { data: teams = [], isLoading, isError, error } = useQuery({
     queryKey: ['teams'],
     queryFn: async () => {
-      // 👇 CORREÇÃO AQUI: Adicionado o .select('*') antes do .order
-      const { data, error } = await supabase
+      // 1. Vai buscar as equipas
+      const { data: teamsData, error: teamsError } = await supabase
         .from('teams')
         .select('*')
         .order('name');
         
-      if (error) throw new Error(error.message, { cause: error });
+      if (teamsError) throw new Error(teamsError.message, { cause: teamsError });
       
-      return data.map((t) => ({
-        id: t.id,
-        name: t.name,
-        city: t.province,
-        division: t.division,
-        founded: t.founded?.toString() || '',
-        description: t.description || '',
-        color: t.header_color || '#2563eb',
-        logo: t.crest_url,
-        initials: t.name.substring(0, 3).toUpperCase(),
-        players: 0,
-      })) as Team[];
+      // 2. CORREÇÃO: Vai buscar APENAS o 'id' e o 'team_id' que sabemos que existem!
+      const { data: playersData, error: playersError } = await supabase
+        .from('players')
+        .select('id, team_id');
+
+      if (playersError) throw new Error(playersError.message, { cause: playersError });
+
+      // 3. Associa a contagem a cada equipa correspondente
+      return teamsData.map((t) => {
+        // Conta quantos jogadores têm o ID desta equipa
+        const playerCount = (playersData || []).filter(p => {
+          return String(p.team_id) === String(t.id);
+        }).length;
+
+        return {
+          id: t.id,
+          name: t.name,
+          city: t.province,
+          division: t.division,
+          founded: t.founded?.toString() || '',
+          description: t.description || '',
+          color: t.header_color || '#2563eb',
+          logo: t.crest_url,
+          initials: t.name.substring(0, 3).toUpperCase(),
+          players: playerCount, 
+        };
+      }) as Team[];
     },
     staleTime: 1000 * 60 * 10, 
     refetchOnWindowFocus: false,
@@ -54,7 +69,6 @@ export default function TeamManagement() {
     );
   }, [search, teams]);
 
-  // 💡 Mostra loading
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50">
@@ -63,7 +77,6 @@ export default function TeamManagement() {
     );
   }
 
-  // 💡 MOSTRA O ERRO SE ALGO FALHAR
   if (isError) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-slate-50 p-6 text-center">
