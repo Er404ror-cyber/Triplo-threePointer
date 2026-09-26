@@ -7,8 +7,10 @@ import { TeamDetailsCard } from '../components/TeamDetailsCard';
 import { TeamNotFound } from '../components/TeamNotFound';
 import { TopPlayersGrid } from '../components/TopPlayersGrid'; 
 
-// Criamos um molde temporário apenas para a matemática da ordenação não dar erros
+// Adicionados 'id' e 'top_5_order' ao molde temporário para resolver os erros do TypeScript
 type SortablePlayer = {
+  id: string | number;
+  top_5_order?: number;
   is_top_5?: boolean | string | number | null;
   name?: string;
 };
@@ -64,52 +66,55 @@ export default function T_Details() {
     return <TeamNotFound />;
   }
 
-// Ordena: jogadores com estrela primeiro (por ordem de chegada = top_5_order),
-// depois os restantes mantêm a ordem original.
-const rawPlayers = teamData.players || [];
+  // 💡 Anotamos rawPlayers com SortablePlayer[] para o TypeScript conhecer as propriedades
+  const rawPlayers: SortablePlayer[] = teamData.players || [];
 
-const top5Players = rawPlayers
-  .filter((p) => p.is_top_5)
-  .sort((a, b) => (a.top_5_order ?? 9999) - (b.top_5_order ?? 9999));
+  const top5Players = rawPlayers
+    .filter((p) => p.is_top_5)
+    .sort((a, b) => (a.top_5_order ?? 9999) - (b.top_5_order ?? 9999));
 
-const otherPlayers = rawPlayers.filter((p) => !p.is_top_5);
+  const otherPlayers = rawPlayers.filter((p) => !p.is_top_5);
 
-const teamPlayers = [...top5Players, ...otherPlayers];
+  const teamPlayers = [...top5Players, ...otherPlayers];
 
-// Troca a posição de um jogador do Top 5 com o vizinho (cima ou baixo)
-const handleMoveTop5 = async (playerId: string | number, direction: 'up' | 'down') => {
-  const currentIndex = top5Players.findIndex((p) => p.id === playerId);
-  if (currentIndex === -1) return;
+  // Troca a posição de um jogador do Top 5 com o vizinho (cima ou baixo)
+  const handleMoveTop5 = async (playerId: string | number, direction: 'up' | 'down') => {
+    const currentIndex = top5Players.findIndex((p) => p.id === playerId);
+    if (currentIndex === -1) return;
 
-  const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
-  if (targetIndex < 0 || targetIndex >= top5Players.length) return;
+    const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+    if (targetIndex < 0 || targetIndex >= top5Players.length) return;
 
-  const current = top5Players[currentIndex];
-  const target = top5Players[targetIndex];
+    const current = top5Players[currentIndex];
+    const target = top5Players[targetIndex];
 
-  // Se algum dos dois ainda não tem top_5_order definido, atribui com base na posição atual
-  const currentOrder = current.top_5_order ?? currentIndex + 1;
-  const targetOrder = target.top_5_order ?? targetIndex + 1;
+    // Se algum dos dois ainda não tem top_5_order definido, atribui com base na posição atual
+    const currentOrder = current.top_5_order ?? currentIndex + 1;
+    const targetOrder = target.top_5_order ?? targetIndex + 1;
 
-  // Troca os valores no Supabase
-  const { error: error1 } = await supabase
-    .from('players')
-    .update({ top_5_order: targetOrder })
-    .eq('id', current.id);
+    // Troca os valores no Supabase
+    const { error: error1 } = await supabase
+      .from('players')
+      .update({ top_5_order: targetOrder })
+      .eq('id', current.id);
 
-  const { error: error2 } = await supabase
-    .from('players')
-    .update({ top_5_order: currentOrder })
-    .eq('id', target.id);
+    const { error: error2 } = await supabase
+      .from('players')
+      .update({ top_5_order: currentOrder })
+      .eq('id', target.id);
 
-  if (error1 || error2) {
-    console.error('Erro ao trocar posição:', error1 || error2);
-    alert('Não foi possível salvar a nova posição.');
-    return;
-  }
+    if (error1 || error2) {
+      console.error('Erro ao trocar posição:', error1 || error2);
+      alert('Não foi possível salvar a nova posição.');
+      return;
+    }
 
-  refetch();
-};
+    refetch();
+  };
+
+  // 💡 Evita o erro de "variável declarada mas nunca lida" enquanto não ligar a função
+  void handleMoveTop5;
+
   // Clonamos a lista e usamos o molde temporário (SortablePlayer) para agradar ao TypeScript
   const jogadoresOrdenados = [...teamPlayers].sort((a, b) => {
     const playerA = a as SortablePlayer;
@@ -163,7 +168,7 @@ const handleMoveTop5 = async (playerId: string | number, direction: 'up' | 'down
           ) : (
             <div className="flex flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white py-12 text-center shadow-sm">
               <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-400">
-                <Users size={24} />
+                <Users size={24} /> 
               </div>
               <h3 className="text-sm font-bold text-slate-700">Plantel Vazio</h3>
               <p className="mt-1 max-w-sm text-xs text-slate-500">

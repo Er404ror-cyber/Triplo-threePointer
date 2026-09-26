@@ -1,4 +1,3 @@
-import React from 'react';
 import { Header } from '../components/header/header';
 // Ajuste os caminhos abaixo conforme a pasta onde guardou os componentes que criámos!
 import { MatchHero } from '../components/pub_jogadores/MatchHero'; 

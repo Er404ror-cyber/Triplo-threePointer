@@ -1,4 +1,3 @@
-import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabaseClient'; // Ajuste o caminho se necessário
 import { useTranslate } from '../../context/LanguageProvider';

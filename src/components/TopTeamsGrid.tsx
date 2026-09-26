@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Users, Calendar, MapPin } from 'lucide-react';
-import type { Team } from '../Dashboard/TeamManagement';
+import type { Team } from '../types/useTeamForm'; // CORRETO
 
 interface TopTeamsGridProps {
   teams: Team[];

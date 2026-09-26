@@ -11,6 +11,7 @@ interface TextFieldProps {
   required?: boolean;
   inputMode?: "text" | "numeric" | "decimal";
   numericOnly?: boolean;
+  disabled?: boolean; // 💡 Adicionado
 }
 
 export default function TextField({
@@ -24,10 +25,12 @@ export default function TextField({
   required,
   inputMode,
   numericOnly = false,
+  disabled = false, // 💡 Adicionado
 }: TextFieldProps) {
   const currentLength = (value ?? "").length;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (disabled) return; // Proteção extra
     let nextValue = e.target.value;
     if (numericOnly) {
       nextValue = nextValue.replace(/\D/g, "");
@@ -51,7 +54,8 @@ export default function TextField({
           maxLength={maxLength}
           required={required}
           inputMode={inputMode}
-          className={`w-full rounded-xl border border-slate-200 py-2.5 pr-4 text-sm text-slate-900 transition focus:border-blue-500 focus:outline-none ${
+          disabled={disabled} // 💡 Passagem ao elemento nativo
+          className={`w-full rounded-xl border border-slate-200 py-2.5 pr-4 text-sm text-slate-900 transition focus:border-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500 ${
             Icon ? "pl-10" : "pl-4"
           }`}
         />

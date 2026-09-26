@@ -73,94 +73,94 @@ export function Top5Cards({ players, onToggleTop5, onViewPlayer, onMoveTop5 }: T
           {emptyMsg}
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
-          {list.map((player, index) => {
-            const isFirst = index === 0;
-            const isLast = index === list.length - 1;
+<div className="flex flex-col gap-3 sm:grid sm:grid-cols-3 sm:gap-4 md:grid-cols-5">          
+   {list.map((player, index) => {
+  const isFirst = index === 0;
+  const isLast = index === list.length - 1;
 
-            return (
-              <div
-                key={player.id}
-                className="relative flex flex-col items-center justify-between rounded-2xl border border-amber-200 bg-amber-50/40 p-4 text-center transition-all hover:shadow-md hover:border-amber-300"
-              >
-                <button
-                  type="button"
-                  onClick={() => onToggleTop5(player)}
-                  title="Remover do Top 5"
-                  className="absolute top-2.5 right-2.5 flex h-6 w-6 items-center justify-center rounded-full bg-white/80 text-amber-500 shadow-sm transition hover:bg-rose-50 hover:text-rose-600"
-                >
-                  <Star size={13} fill="currentColor" />
-                </button>
+  return (
+    <div
+      key={player.id}
+      className="relative flex flex-row items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50/40 p-3 text-left shadow-sm transition-all hover:shadow-md hover:border-amber-300 sm:flex-col sm:items-center sm:justify-between sm:p-4 sm:text-center"
+    >
+      <button
+        type="button"
+        onClick={() => onToggleTop5(player)}
+        title="Remover do Top 5"
+        className="absolute top-2.5 right-2.5 flex h-6 w-6 items-center justify-center rounded-full bg-white/80 text-amber-500 shadow-sm transition hover:bg-rose-50 hover:text-rose-600"
+      >
+        <Star size={13} fill="currentColor" />
+      </button>
 
-                {onMoveTop5 && (
-                  <div className="absolute left-2.5 top-2.5 flex flex-col gap-0.5">
-                    <button
-                      type="button"
-                      onClick={() => onMoveTop5(player.id, 'up')}
-                      disabled={isFirst}
-                      title="Mover para cima"
-                      className={`flex h-5 w-5 items-center justify-center rounded-full border shadow-sm transition ${
-                        isFirst
-                          ? 'border-slate-200 bg-white text-slate-300 cursor-not-allowed'
-                          : 'border-amber-300 bg-white text-amber-600 hover:bg-amber-100'
-                      }`}
-                    >
-                      <ChevronUp size={11} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onMoveTop5(player.id, 'down')}
-                      disabled={isLast}
-                      title="Mover para baixo"
-                      className={`flex h-5 w-5 items-center justify-center rounded-full border shadow-sm transition ${
-                        isLast
-                          ? 'border-slate-200 bg-white text-slate-300 cursor-not-allowed'
-                          : 'border-amber-300 bg-white text-amber-600 hover:bg-amber-100'
-                      }`}
-                    >
-                      <ChevronDown size={11} />
-                    </button>
-                  </div>
-                )}
+      {onMoveTop5 && (
+        <div className="absolute left-2 top-2 flex flex-col gap-0.5 sm:left-2.5 sm:top-2.5">
+          <button
+            type="button"
+            onClick={() => onMoveTop5(player.id, 'up')}
+            disabled={isFirst}
+            title="Mover para cima"
+            className={`flex h-5 w-5 items-center justify-center rounded-full border shadow-sm transition ${
+              isFirst
+                ? 'border-slate-200 bg-white text-slate-300 cursor-not-allowed'
+                : 'border-amber-300 bg-white text-amber-600 hover:bg-amber-100'
+            }`}
+          >
+            <ChevronUp size={11} />
+          </button>
+          <button
+            type="button"
+            onClick={() => onMoveTop5(player.id, 'down')}
+            disabled={isLast}
+            title="Mover para baixo"
+            className={`flex h-5 w-5 items-center justify-center rounded-full border shadow-sm transition ${
+              isLast
+                ? 'border-slate-200 bg-white text-slate-300 cursor-not-allowed'
+                : 'border-amber-300 bg-white text-amber-600 hover:bg-amber-100'
+            }`}
+          >
+            <ChevronDown size={11} />
+          </button>
+        </div>
+      )}
 
-                <div className="mt-1 mb-2">
-                  {player.photo ? (
-                    <img
-                      src={player.photo}
-                      alt={player.name}
-                      className="h-14 w-14 rounded-full object-cover border-2 border-amber-300 shadow-sm"
-                      onError={(e) => {
-                        e.currentTarget.style.display = 'none';
-                      }}
-                    />
-                  ) : (
-                    <div className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-amber-200 bg-amber-100 text-sm font-bold text-amber-900 shadow-sm">
-                      {getInitials(player.name)}
-                    </div>
-                  )}
-                </div>
+      <div className="ml-6 shrink-0 sm:ml-0 sm:mt-1 sm:mb-2">
+        {player.photo ? (
+          <img
+            src={player.photo}
+            alt={player.name}
+            className="h-12 w-12 rounded-full object-cover border-2 border-amber-300 shadow-sm sm:h-14 sm:w-14"
+            onError={(e) => {
+              e.currentTarget.style.display = 'none';
+            }}
+          />
+        ) : (
+          <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-amber-200 bg-amber-100 text-sm font-bold text-amber-900 shadow-sm sm:h-14 sm:w-14">
+            {getInitials(player.name)}
+          </div>
+        )}
+      </div>
 
-                <div className="w-full">
-                  <h4 
-                    onClick={() => onViewPlayer && onViewPlayer(player.id)}
-                    className="truncate text-sm font-bold text-slate-800 cursor-pointer hover:underline"
-                  >
-                    {player.name}
-                  </h4>
-                  <p className="text-[11px] text-slate-400">
-                    {player.position || 'Atleta'} {player.age ? `• ${player.age} anos` : ''}
-                  </p>
-                </div>
+      <div className="min-w-0 flex-1 pr-6 sm:w-full sm:flex-none sm:pr-0">
+        <h4
+          onClick={() => onViewPlayer && onViewPlayer(player.id)}
+          className="truncate text-sm font-bold text-slate-800 cursor-pointer hover:underline"
+        >
+          {player.name}
+        </h4>
+        <p className="text-[11px] text-slate-400">
+          {player.position || 'Atleta'} {player.age ? `• ${player.age} anos` : ''}
+        </p>
 
-                <div className="mt-3 flex w-full items-center justify-between border-t border-amber-100 pt-2 text-[10px] text-slate-500">
-                  <span className="truncate max-w-[55%] text-left">{player.team || 'Sem clube'}</span>
-                  <span className="rounded bg-white px-1.5 py-0.5 font-medium text-amber-700 shadow-xs">
-                    {player.category || '-'}
-                  </span>
-                </div>
-              </div>
-            );
-          })}
+        <div className="mt-2 flex w-full items-center justify-between gap-2 border-t border-amber-100 pt-2 text-[10px] text-slate-500">
+          <span className="truncate max-w-[55%] text-left">{player.team || 'Sem clube'}</span>
+          <span className="rounded bg-white px-1.5 py-0.5 font-medium text-amber-700 shadow-xs">
+            {player.category || '-'}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+})}
         </div>
       )}
     </div>
@@ -185,6 +185,9 @@ export function Top5Cards({ players, onToggleTop5, onViewPlayer, onMoveTop5 }: T
 // ============================================================================
 // COMPONENTE: TABELA GERAL DE JOGADORES
 // ============================================================================
+// ============================================================================
+// COMPONENTE: TABELA GERAL DE JOGADORES (responsivo: cards no mobile, tabela no desktop)
+// ============================================================================
 interface PlayersTableProps {
   players: Player[];
   onToggleActive: (id: string | number) => void;
@@ -200,26 +203,130 @@ export function PlayersTable({
   onToggleTop5,
   onViewPlayer
 }: PlayersTableProps) {
+  if (players.length === 0) {
+    return (
+      <div className="rounded-xl border border-slate-200 bg-white p-8 text-center text-sm text-slate-400 shadow-sm">
+        Nenhum jogador encontrado.
+      </div>
+    );
+  }
+
   return (
-    <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
-      <table className="w-full text-left text-sm text-slate-600">
-        <thead className="bg-slate-50 text-xs uppercase text-slate-500">
-          <tr>
-            <th className="px-6 py-4 font-semibold">Jogador</th>
-            <th className="px-6 py-4 font-semibold">Equipa & Categoria</th>
-            <th className="px-6 py-4 font-semibold text-center">Status</th>
-            <th className="px-6 py-4 font-semibold text-right">Ações</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-slate-200">
-          {players.length === 0 ? (
+    <>
+      {/* ===== VERSÃO MOBILE: CARDS EMPILHADOS ===== */}
+      <div className="flex flex-col gap-3 sm:hidden">
+        {players.map((player) => (
+          <div
+            key={player.id}
+            className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+          >
+            <div className="flex items-start gap-3">
+              {player.photo ? (
+                <img
+                  src={player.photo}
+                  alt={player.name}
+                  className="h-12 w-12 shrink-0 rounded-full object-cover border border-slate-200"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+              ) : (
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-slate-200 text-sm font-bold text-slate-700">
+                  {getInitials(player.name)}
+                </div>
+              )}
+
+              <div className="min-w-0 flex-1">
+                <div className="flex items-start justify-between gap-2">
+                  <div
+                    className="min-w-0 truncate font-semibold text-slate-900"
+                    onClick={() => onViewPlayer && onViewPlayer(player.id)}
+                  >
+                    {player.name}
+                  </div>
+                  <span
+                    className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                      player.active
+                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/50'
+                        : 'bg-rose-50 text-rose-700 border border-rose-200/50'
+                    }`}
+                  >
+                    {player.active ? 'Ativo' : 'Inativo'}
+                  </span>
+                </div>
+
+                <div className="mt-0.5 text-xs text-slate-500">
+                  {player.position || 'Sem posição'} • {player.age ? `${player.age} anos` : 'Idade N/A'}
+                </div>
+
+                <div className="mt-2 flex items-center justify-between gap-2 text-xs">
+                  <span className="truncate font-medium text-slate-700">{player.team || 'Sem clube'}</span>
+                  <span className="shrink-0 text-slate-500">{player.category || player.province || '-'}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-3 flex items-center justify-end gap-2 border-t border-slate-100 pt-3">
+              <button
+                type="button"
+                onClick={() => onToggleTop5(player)}
+                title={player.is_top_5 ? "Remover dos Top 5" : "Adicionar aos Top 5"}
+                className={`flex h-9 w-9 items-center justify-center rounded-lg border transition ${
+                  player.is_top_5
+                    ? "border-amber-300 bg-amber-100 text-amber-600"
+                    : "border-slate-200 text-slate-400"
+                }`}
+              >
+                <Star size={16} fill={player.is_top_5 ? "currentColor" : "none"} />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => onToggleActive(player.id)}
+                title={player.active ? 'Desativar Jogador' : 'Ativar Jogador'}
+                className={`flex h-9 w-9 items-center justify-center rounded-lg border transition ${
+                  player.active
+                    ? 'border-emerald-200 bg-emerald-50 text-emerald-600'
+                    : 'border-slate-200 text-slate-400'
+                }`}
+              >
+                <Power size={16} />
+              </button>
+
+              <Link
+                to={`/admin/editplayer/${player.id}`}
+                title="Editar Jogador"
+                className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-400"
+              >
+                <Pencil size={16} />
+              </Link>
+
+              <button
+                type="button"
+                onClick={() => onRemovePlayer(player.id)}
+                title="Remover Jogador"
+                className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 text-slate-400"
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* ===== VERSÃO DESKTOP: TABELA ===== */}
+      <div className="hidden overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm sm:block">
+        <table className="w-full text-left text-sm text-slate-600">
+          <thead className="bg-slate-50 text-xs uppercase text-slate-500">
             <tr>
-              <td colSpan={4} className="px-6 py-8 text-center text-sm text-slate-400">
-                Nenhum jogador encontrado.
-              </td>
+              <th className="px-6 py-4 font-semibold">Jogador</th>
+              <th className="px-6 py-4 font-semibold">Equipa & Categoria</th>
+              <th className="px-6 py-4 font-semibold text-center">Status</th>
+              <th className="px-6 py-4 font-semibold text-right">Ações</th>
             </tr>
-          ) : (
-            players.map((player) => (
+          </thead>
+          <tbody className="divide-y divide-slate-200">
+            {players.map((player) => (
               <tr key={player.id} className="transition-colors hover:bg-slate-50/50">
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-4">
@@ -315,10 +422,10 @@ export function PlayersTable({
                   </div>
                 </td>
               </tr>
-            ))
-          )}
-        </tbody>
-      </table>
-    </div>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
   );
 }

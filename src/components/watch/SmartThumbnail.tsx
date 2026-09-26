@@ -4,8 +4,7 @@ import { useTranslate } from '../../context/LanguageProvider';
 
 interface SmartThumbnailProps {
   mediaUrl: string;
-  mediaType: 'video' | 'image' | 'link';
-}
+mediaType: 'video' | 'image' | 'link' | 'native';}
 
 export const SmartThumbnail: React.FC<SmartThumbnailProps> = ({ mediaUrl, mediaType }) => {
   const { t } = useTranslate();

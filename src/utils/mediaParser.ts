@@ -2,6 +2,7 @@ export interface ParsedMedia {
   platform: 'youtube' | 'vimeo' | 'tiktok' | 'instagram' | 'facebook' | 'native' | 'image' | 'generic';
   embedUrl: string;
   isVertical: boolean;
+  thumbnailUrl?: string;
 }
 
 export const parseSocialMediaUrl = (url: string, type: string): ParsedMedia => {

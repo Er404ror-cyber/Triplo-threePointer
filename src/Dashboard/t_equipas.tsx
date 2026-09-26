@@ -104,7 +104,7 @@ export default function Equipas() {
           </Link>
         </header>
 
-        <div className="flex items-center justify-between border-b border-slate-200/80 pb-4">
+<div className="flex flex-col gap-2 border-b border-slate-100 bg-emerald-50/40 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <h2 className="text-base font-bold text-slate-900">Todas as Equipas ({filteredTeams.length})</h2>
           
           <div className="relative w-full sm:w-80">

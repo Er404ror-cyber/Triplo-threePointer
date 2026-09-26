@@ -45,14 +45,14 @@ function formatTimeAgo(
 const FeedItem = memo(
   ({
     post,
-    deviceId,
+    // deviceId removido da desestruturação, pois não é usado internamente
     locale,
     language,
     onSelect,
     t,
   }: {
     post: PostWithRelations;
-    deviceId: string;
+    deviceId: string; // Mantido na tipagem para não quebrar a passagem da prop
     locale: string;
     language: string;
     onSelect: (post: PostWithRelations) => void;

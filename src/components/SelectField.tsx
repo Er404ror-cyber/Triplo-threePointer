@@ -13,6 +13,7 @@ interface SelectFieldProps {
   options: (string | Option)[];
   placeholder?: string;
   required?: boolean;
+  disabled?: boolean; // 💡 Adicionado
 }
 
 export default function SelectField({
@@ -23,6 +24,7 @@ export default function SelectField({
   options,
   placeholder,
   required = false,
+  disabled = false, // 💡 Adicionado
 }: SelectFieldProps) {
   const normalized: Option[] = options.map((opt) =>
     typeof opt === "string" ? { label: opt, value: opt } : opt
@@ -46,7 +48,8 @@ export default function SelectField({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           required={required}
-          className={`w-full rounded-xl border border-slate-200 py-3 pr-4 outline-none focus:border-blue-500 ${
+          disabled={disabled} // 💡 Passagem ao elemento nativo
+          className={`w-full rounded-xl border border-slate-200 py-3 pr-4 outline-none focus:border-blue-500 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500 ${
             Icon ? "pl-12" : "px-4"
           }`}
         >

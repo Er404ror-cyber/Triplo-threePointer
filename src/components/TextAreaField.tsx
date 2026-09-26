@@ -9,6 +9,7 @@ interface TextAreaFieldProps {
   maxLength?: number;
   rows?: number;
   required?: boolean;
+  disabled?: boolean; // 💡 Adicionado
 }
 
 export default function TextAreaField({
@@ -20,10 +21,12 @@ export default function TextAreaField({
   maxLength,
   rows = 4,
   required,
+  disabled = false, // 💡 Adicionado
 }: TextAreaFieldProps) {
   const currentLength = (value ?? "").length;
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    if (disabled) return; // Proteção extra
     if (typeof onChange === "function") {
       onChange(e.target.value);
     }
@@ -43,7 +46,8 @@ export default function TextAreaField({
         maxLength={maxLength}
         rows={rows}
         required={required}
-        className="w-full rounded-xl border border-slate-200 p-3 text-sm text-slate-900 transition focus:border-blue-500 focus:outline-none resize-none"
+        disabled={disabled} // 💡 Passagem ao elemento nativo
+        className="w-full rounded-xl border border-slate-200 p-3 text-sm text-slate-900 transition focus:border-blue-500 focus:outline-none resize-none disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500"
       />
 
       {maxLength && (

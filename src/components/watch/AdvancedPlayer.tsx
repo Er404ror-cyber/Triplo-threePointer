@@ -3,8 +3,7 @@ import { parseSocialMediaUrl } from '../../utils/mediaParser';
 
 interface AdvancedPlayerProps {
   mediaUrl: string;
-  mediaType: 'video' | 'image' | 'link';
-}
+mediaType: 'video' | 'image' | 'link' | 'native';}
 
 export const AdvancedPlayer: React.FC<AdvancedPlayerProps> = ({ mediaUrl, mediaType }) => {
   const media = useMemo(() => parseSocialMediaUrl(mediaUrl, mediaType), [mediaUrl, mediaType]);

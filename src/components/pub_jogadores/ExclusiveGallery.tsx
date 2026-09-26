@@ -1,4 +1,3 @@
-import React from 'react';
 import { useTranslate } from '../../context/LanguageProvider'; // Ajuste o caminho
 
 export function ExclusiveGallery() {

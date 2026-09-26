@@ -139,10 +139,10 @@ export default function AdminJogadores() {
   // ==========================================================================
 // 5. TROCAR POSIÇÃO DE UM JOGADOR NO TOP 5 (MOVER PARA CIMA/BAIXO)
 // ==========================================================================
-const handleMoveTop5 = async (playerId: string | number, direction: 'up' | 'down') => {
-  const player = players.find((p) => p.id === playerId);
-  if (!player) return;
-
+// @ts-ignore: Função guardada para uso futuro
+  const handleMoveTop5 = async (playerId: string | number, direction: 'up' | 'down') => {
+    const player = players.find((p) => p.id === playerId);
+    if (!player) return;
   const cat = (player.category || '').trim().toLowerCase();
   const isSenior = cat === 'sénior' || cat === 'senior';
 

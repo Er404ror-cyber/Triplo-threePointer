@@ -14,7 +14,6 @@ import {
   Loader2
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { Header } from '../components/header/header';
 import { supabase } from '../lib/supabaseClient';
 
 export interface Player {
@@ -321,8 +320,7 @@ export default function AdminJogadores() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-50/60 p-4 font-sans text-slate-900 sm:p-6 md:p-8">
-       <div className="mx-auto max-w-7xl space-y-8">
+<div className="min-h-screen overflow-x-hidden bg-slate-50/60 p-4 font-sans text-slate-900 sm:p-6 md:p-8">       <div className="mx-auto max-w-7xl space-y-8">
         
         {/* 1. HERO / CABEÇALHO */}
         <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200 pb-5">
