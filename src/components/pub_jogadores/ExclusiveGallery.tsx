@@ -1,88 +1,143 @@
-import { useTranslate } from '../../context/LanguageProvider'; // Ajuste o caminho
+import  { useRef, useEffect } from 'react';
 
-export function ExclusiveGallery() {
-  const { t } = useTranslate();
+export interface Jogador {
+  id: string | number;
+  photo?: string | null;
+  name: string;
+  category: string; // "sénior" | "juvenil"
+}
 
-  const topRowItems = [0, 1, 2, 3, 4].map((i) => ({
-    id: `top-${i}`,
-    header: `${t('gallery_a_title')} ${i}`,
-    title: t('gallery_a_title'),
-    subtitle: t('gallery_a_subtitle'),
-    isHighlighted: i === 3,
-  }));
+interface ExclusiveGalleryProps {
+  jogadores: Jogador[];
+}
 
-  const bottomRowItems = [0, 1, 2, 3, 4].map((i) => ({
-    id: `bottom-${i}`,
-    header: `${t('gallery_b_title')} ${i}`,
-    title: t('gallery_b_title'),
-    subtitle: t('gallery_b_subtitle'),
-  }));
+const getInitials = (name: string) => {
+  if (!name) return '';
+  const names = name.trim().split(' ');
+  if (names.length >= 2) {
+    return (names[0][0] + names[names.length - 1][0]).toUpperCase();
+  }
+  return name.substring(0, 2).toUpperCase();
+};
+
+const normalize = (str: string) =>
+  str
+    ?.toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') || '';
+
+function JogadorCard({ jogador }: { jogador: Jogador }) {
+  const isSenior = normalize(jogador.category) === 'senior';
 
   return (
-    <>
-      <style>{`
-        @keyframes scroll-left {
-          0% { transform: translateX(0); }
-          100% { transform: translateX(-50%); }
+    <div className="snap-center shrink-0 w-64 h-80 relative rounded-lg overflow-hidden bg-gray-800">
+      <div
+        className={`absolute top-3 right-3 z-10 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide ${
+          isSenior ? 'bg-blue-600 text-white' : 'bg-amber-500 text-black'
+        }`}
+      >
+        {jogador.category}
+      </div>
+
+      {jogador.photo ? (
+        <img
+          src={jogador.photo}
+          alt={`Foto de ${jogador.name}`}
+          className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+        />
+      ) : (
+        <div className="w-full h-full flex items-center justify-center bg-gray-700 hover:scale-105 transition-transform duration-300">
+          <span className="text-6xl font-bold text-gray-500 opacity-50">
+            {getInitials(jogador.name)}
+          </span>
+        </div>
+      )}
+
+      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-4">
+        <p className="font-semibold text-lg">{jogador.name}</p>
+      </div>
+    </div>
+  );
+}
+
+interface CategoryRowProps {
+  title: string;
+  jogadores: Jogador[];
+  direction: 'right' | 'left'; // direção do auto-scroll
+}
+
+function CategoryRow({ title, jogadores, direction }: CategoryRowProps) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const CARD_WIDTH = 256 + 16; // w-64 (256px) + gap-4 (16px)
+
+  // Posição inicial: seniores começam no início (esquerda),
+  // juvenis começam já deslocados para a direita (para poderem "voltar" da direita para a esquerda)
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+
+    if (direction === 'left') {
+      // Começa logo à esquerda e vai avançando para a direita antes de inverter o loop
+      el.scrollLeft = 0;
+    } else {
+      el.scrollLeft = 0;
+    }
+  }, [direction, jogadores.length]);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el || jogadores.length === 0) return;
+
+    const interval = setInterval(() => {
+      const maxScroll = el.scrollWidth - el.clientWidth;
+
+      if (direction === 'right') {
+        // Sénior: avança para a direita, ao chegar ao fim reinicia do início
+        if (el.scrollLeft >= maxScroll - 5) {
+          el.scrollTo({ left: 0, behavior: 'smooth' });
+        } else {
+          el.scrollBy({ left: CARD_WIDTH, behavior: 'smooth' });
         }
-        @keyframes scroll-right {
-          0% { transform: translateX(-50%); }
-          100% { transform: translateX(0); }
+      } else {
+        // Juvenil: avança para a esquerda, ao chegar ao fim (scrollLeft = 0) reinicia do fim
+        if (el.scrollLeft <= 5) {
+          el.scrollTo({ left: maxScroll, behavior: 'smooth' });
+        } else {
+          el.scrollBy({ left: -CARD_WIDTH, behavior: 'smooth' });
         }
-        .animate-scroll-left { animation: scroll-left 40s linear infinite; }
-        .animate-scroll-right { animation: scroll-right 40s linear infinite; }
-        .pause-on-hover:hover { animation-play-state: paused; }
-      `}</style>
+      }
+    }, 3000); // <-- Alterado de 2000 para 4000 (4 segundos)
 
-      <section className="py-16 sm:py-24">
-        <div className="max-w-[1400px] mx-auto px-6 lg:px-16 mb-12">
-          <div className="text-[10px] font-bold text-gray-500 tracking-[0.25em] uppercase mb-2">
-            {t('gallery_eyebrow')}
-          </div>
-          <h2 className="text-3xl font-black uppercase tracking-tight text-white">
-            {t('gallery_title')}
-          </h2>
-        </div>
+    return () => clearInterval(interval);
+  }, [direction, jogadores.length]);
 
-        <div className="flex w-max animate-scroll-right pause-on-hover mb-6">
-          {[1, 2].map((setIndex) => (
-            <div key={`set-top-${setIndex}`} className="flex gap-6 pr-6">
-              {topRowItems.map((item) => (
-                <div
-                  key={`${setIndex}-${item.id}`}
-                  className={`relative flex flex-col justify-between w-[280px] h-[380px] bg-[#0a0a0a] rounded-2xl p-5 transition-transform duration-300 hover:scale-[1.02] cursor-pointer ${
-                    item.isHighlighted 
-                      ? 'border border-[#dc2626] shadow-[0_0_15px_rgba(220,38,38,0.15)]' 
-                      : 'border border-white/5'
-                  }`}
-                >
-                  <span className="text-[11px] font-bold text-gray-300 uppercase tracking-wider">{item.header}</span>
-                  <div className="flex flex-col gap-1 mt-auto">
-                    <h3 className="text-[#facc15] font-black text-[15px] uppercase tracking-wide">{item.title}</h3>
-                    <p className="text-gray-500 font-bold text-[10px] uppercase tracking-widest">{item.subtitle}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ))}
-        </div>
+  if (jogadores.length === 0) return null;
 
-        <div className="flex w-max animate-scroll-left pause-on-hover">
-          {[1, 2].map((setIndex) => (
-            <div key={`set-bottom-${setIndex}`} className="flex gap-6 pr-6">
-              {bottomRowItems.map((item) => (
-                <div key={`${setIndex}-${item.id}`} className="relative flex flex-col justify-between w-[280px] h-[380px] bg-[#0a0a0a] rounded-2xl border border-white/5 p-5 transition-transform duration-300 hover:scale-[1.02] cursor-pointer">
-                  <span className="text-[11px] font-bold text-gray-300 uppercase tracking-wider">{item.header}</span>
-                  <div className="flex flex-col gap-1 mt-auto">
-                    <h3 className="text-[#ef4444] font-black text-[15px] uppercase tracking-wide">{item.title}</h3>
-                    <p className="text-gray-500 font-bold text-[10px] uppercase tracking-widest">{item.subtitle}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ))}
-        </div>
-      </section>
-    </>
+  return (
+    <div className="mb-10">
+      <h3 className="text-xl font-bold mb-4 px-4 text-gray-200">{title}</h3>
+      <div
+        ref={scrollRef}
+        className="flex overflow-x-auto gap-4 px-4 pb-4 snap-x scroll-smooth"
+      >
+        {jogadores.map((jogador) => (
+          <JogadorCard key={jogador.id} jogador={jogador} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export function ExclusiveGallery({ jogadores = [] }: ExclusiveGalleryProps) {
+  const seniores = jogadores.filter((j) => normalize(j.category) === 'senior');
+  const juvenis = jogadores.filter((j) => normalize(j.category) === 'juvenil');
+
+  return (
+    <section className="py-10">
+      <h2 className="text-3xl font-bold text-center mb-8">Galeria Exclusiva</h2>
+
+      <CategoryRow title="Séniores" jogadores={seniores} direction="right" />
+      <CategoryRow title="Juvenis" jogadores={juvenis} direction="left" />
+    </section>
   );
 }

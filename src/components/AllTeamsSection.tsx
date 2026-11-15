@@ -1,18 +1,20 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, MapPin, Users, Shield } from 'lucide-react';
-import type { Team } from '../types/useTeamForm'; // CORRETO
+import { Search, MapPin, Users, Star } from 'lucide-react';
+import type { Team } from '../types/useTeamForm';
 
 interface AllTeamsSectionProps {
   teams: Team[];
   searchValue: string;
   onSearchChange: (value: string) => void;
+  onToggleTop5: (e: React.MouseEvent, teamId: string | number, isCurrentlyTop5: boolean) => void;
 }
 
 export function AllTeamsSection({
   teams,
   searchValue,
   onSearchChange,
+  onToggleTop5,
 }: AllTeamsSectionProps) {
   const [failedImages, setFailedImages] = useState<Record<string, boolean>>({});
 
@@ -20,9 +22,9 @@ export function AllTeamsSection({
     setFailedImages((prev) => ({ ...prev, [id]: true }));
   };
 
+  
   return (
     <div className="space-y-4">
-      {/* BARRA DE PESQUISA */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-lg font-bold text-slate-800">Todas as Equipas</h2>
 
@@ -38,13 +40,11 @@ export function AllTeamsSection({
         </div>
       </div>
 
-      {/* ESTADO VAZIO */}
       {teams.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-8 text-center text-sm text-slate-500">
           Nenhuma equipa encontrada{searchValue ? ` para "${searchValue}"` : ''}.
         </div>
       ) : (
-        /* GRELHA DE EQUIPAS */
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
           {teams.map((team) => {
             const teamImage = team.logo;
@@ -54,11 +54,10 @@ export function AllTeamsSection({
               <Link
                 key={team.id}
                 to={`/admin/equipas/${team.id}`}
-                state={{ team }} /* 💡 AQUI TAMBÉM: Passamos os dados completos */
+                state={{ team }}
                 className="group flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition-all hover:border-blue-400 hover:shadow-md cursor-pointer"
               >
                 <div>
-                  {/* CABEÇALHO DO CARD COM EMBLEMA */}
                   <div className="flex items-center gap-3">
                     <div className="relative h-12 w-12 overflow-hidden rounded-full border border-slate-200 bg-slate-100 shrink-0">
                       {teamImage && !hasFailed ? (
@@ -89,7 +88,6 @@ export function AllTeamsSection({
                     </div>
                   </div>
 
-                  {/* DETALHES */}
                   <div className="mt-4 space-y-1.5 text-xs text-slate-600">
                     <div className="flex justify-between">
                       <span className="text-slate-400">Divisão:</span>
@@ -104,16 +102,22 @@ export function AllTeamsSection({
                   </div>
                 </div>
 
-                {/* RODAPÉ */}
+                {/* RODAPÉ — ESTRELA NO LUGAR DAS INICIAIS */}
                 <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3 text-xs">
                   <span className="flex items-center gap-1 text-slate-500">
                     <Users size={12} />
                     {team.players ? `${team.players} Jogadores` : '—'}
                   </span>
-                  <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600">
-                    <Shield size={10} />
-                    {team.initials}
-                  </span>
+                <button
+  onClick={(e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onToggleTop5(e, team.id, !!team.is_top_5);
+  }}
+                    title={team.is_top_5 ? 'Remover do Destaque' : 'Adicionar ao Destaque'}
+                  >
+                    <Star size={16} className={team.is_top_5 ? 'fill-current' : ''} />
+                  </button>
                 </div>
               </Link>
             );

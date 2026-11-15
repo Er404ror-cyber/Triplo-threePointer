@@ -18,6 +18,8 @@ export interface Team {
   logo: string | null;
   initials: string;
   players: number;
+    is_top_5?: boolean; 
+
 }
 
 export function useTeamForm(teamId?: string, initialData?: Partial<Team>, onSaveSuccess?: () => void) {

@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { 
   Search, 
   Plus, 
@@ -13,7 +13,8 @@ import {
   Star,
   Loader2
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabaseClient';
 
 export interface Player {
@@ -49,46 +50,37 @@ function getInitials(name: string): string {
 }
 
 export default function AdminJogadores() {
-  const [players, setPlayers] = useState<Player[]>([]);
-  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [tab, setTab] = useState<'all' | 'active' | 'inactive'>('all');
 
   // ==========================================================================
-  // CARREGAR JOGADORES REAIS DO SUPABASE
+  // CARREGAR JOGADORES REAIS DO SUPABASE (COM CACHE DO REACT QUERY)
   // ==========================================================================
-  useEffect(() => {
-    let isMounted = true;
+  const { data: players = [], isLoading: loading } = useQuery<Player[]>({
+    queryKey: ['players-list'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('players')
+        .select('*');
 
-    async function loadData() {
-      try {
-        const { data, error } = await supabase
-          .from('players')
-          .select('*');
-
-        if (error) {
-          console.error('Erro detalhado do Supabase:', error);
-          throw error;
-        }
-
-        if (isMounted) {
-          setPlayers(data || []);
-        }
-      } catch (err) {
-        console.error('Falha na requisição:', err);
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
+      if (error) {
+        console.error('Erro detalhado do Supabase:', error);
+        throw error;
       }
-    }
 
-    loadData();
+      return data || [];
+    },
+    staleTime: 1000 * 60 * 10, // Mantém no cache por 10 minutos sem recarregar
+    gcTime: 1000 * 60 * 30,    // Guarda na memória por 30 minutos
+    refetchOnWindowFocus: false,
+  });
 
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  // Atualiza a lista diretamente no cache do React Query
+  const setPlayers = (updater: (prev: Player[]) => Player[]) => {
+    queryClient.setQueryData<Player[]>(['players-list'], (old) => updater(old || []));
+  };
 
   // Helper para identificar categoria com segurança
   const getPlayerCategory = (player: Player) => {
@@ -138,7 +130,7 @@ export default function AdminJogadores() {
     if (error) {
       console.error('Erro ao remover jogador:', error);
       alert('Erro ao remover da base de dados.');
-      setPlayers(prevPlayers);
+      setPlayers(() => prevPlayers);
     }
   };
 
@@ -242,7 +234,7 @@ export default function AdminJogadores() {
   const inactiveCount = useMemo(() => players.filter((p) => !p.active).length, [players]);
   const clubsCount = useMemo(() => new Set(players.map((p) => p.team).filter(Boolean)).size, [players]);
 
-  // Função auxiliar para renderizar cada grelha de 5 cards
+  // Função auxiliar para renderizar cada grelha de 5 cards (CLICÁVEIS)
   const renderTop5CardGrid = (title: string, list: Player[], emptyMsg: string) => (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
@@ -269,11 +261,15 @@ export default function AdminJogadores() {
           {list.map((player) => (
             <div
               key={player.id}
-              className="relative flex flex-col items-center justify-between rounded-2xl border border-amber-200 bg-amber-50/40 p-4 text-center transition-all hover:shadow-md hover:border-amber-300"
+              onClick={() => navigate(`/admin/jogadores/${player.id}`)}
+              className="group relative flex cursor-pointer flex-col items-center justify-between rounded-2xl border border-amber-200 bg-amber-50/40 p-4 text-center transition-all hover:-translate-y-0.5 hover:shadow-md hover:border-amber-300"
             >
               <button
                 type="button"
-                onClick={() => handleToggleTop5(player)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleToggleTop5(player);
+                }}
                 title="Remover do Top 5"
                 className="absolute top-2.5 right-2.5 flex h-6 w-6 items-center justify-center rounded-full bg-white/80 text-amber-500 shadow-sm transition hover:bg-rose-50 hover:text-rose-600"
               >
@@ -298,7 +294,7 @@ export default function AdminJogadores() {
               </div>
 
               <div className="w-full">
-                <h4 className="truncate text-sm font-bold text-slate-800">
+                <h4 className="truncate text-sm font-bold text-slate-800 group-hover:text-blue-600 transition-colors">
                   {player.name}
                 </h4>
                 <p className="text-[11px] text-slate-400">
@@ -320,7 +316,8 @@ export default function AdminJogadores() {
   );
 
   return (
-<div className="min-h-screen overflow-x-hidden bg-slate-50/60 p-4 font-sans text-slate-900 sm:p-6 md:p-8">       <div className="mx-auto max-w-7xl space-y-8">
+    <div className="min-h-screen overflow-x-hidden bg-slate-50/60 p-4 font-sans text-slate-900 sm:p-6 md:p-8">
+      <div className="mx-auto max-w-7xl space-y-8">
         
         {/* 1. HERO / CABEÇALHO */}
         <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-200 pb-5">
@@ -495,7 +492,11 @@ export default function AdminJogadores() {
                       </tr>
                     ) : (
                       filteredPlayers.map((player) => (
-                        <tr key={player.id} className="transition-colors hover:bg-slate-50/50">
+                        <tr
+                          key={player.id}
+                          onClick={() => navigate(`/admin/jogadores/${player.id}`)}
+                          className="group cursor-pointer transition-colors hover:bg-slate-50/80"
+                        >
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-4">
                               {player.photo ? (
@@ -513,7 +514,7 @@ export default function AdminJogadores() {
                                 </div>
                               )}
                               <div>
-                                <div className="font-semibold text-slate-900">
+                                <div className="font-semibold text-slate-900 group-hover:text-blue-600 transition-colors">
                                   {player.name}
                                 </div>
                                 <div className="text-xs text-slate-500">
@@ -540,11 +541,14 @@ export default function AdminJogadores() {
                             </span>
                           </td>
 
-                          <td className="px-6 py-4">
+                          <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
                             <div className="flex items-center justify-end gap-2">
                               <button
                                 type="button"
-                                onClick={() => handleToggleTop5(player)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleToggleTop5(player);
+                                }}
                                 title={player.is_top_5 ? "Remover dos Top 5" : "Adicionar aos Top 5"}
                                 className={`flex h-8 w-8 items-center justify-center rounded-lg border transition ${
                                   player.is_top_5
@@ -557,7 +561,10 @@ export default function AdminJogadores() {
 
                               <button
                                 type="button"
-                                onClick={() => handleToggleActive(player.id)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleToggleActive(player.id);
+                                }}
                                 title={player.active ? 'Desativar Jogador' : 'Ativar Jogador'}
                                 className={`flex h-8 w-8 items-center justify-center rounded-lg border transition ${
                                   player.active
@@ -570,6 +577,7 @@ export default function AdminJogadores() {
 
                               <Link
                                 to={`/admin/editplayer/${player.id}`}
+                                onClick={(e) => e.stopPropagation()}
                                 title="Editar Jogador"
                                 className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-400 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-600"
                               >
@@ -578,7 +586,10 @@ export default function AdminJogadores() {
 
                               <button
                                 type="button"
-                                onClick={() => handleRemovePlayer(player.id)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleRemovePlayer(player.id);
+                                }}
                                 title="Remover Jogador"
                                 className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-400 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600"
                               >

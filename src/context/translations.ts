@@ -78,7 +78,7 @@ export const translations = {
     shop_now: "CONHEÇA A EQUIPA",
 
     footer_branding_gallery: "Sobre Nós",
-    footer_copyright: "© 2025 BasquetMZ. Todos os direitos reservados.",
+    footer_copyright: "© 2026 AppContent. Todos os direitos reservados.",
 
     founder_title: "Quem Está por Trás do BasquetMZ",
     founder_name: "Casimiro Sidny Mapanguelane Mondlane — \"The Coach 9\"",
@@ -258,7 +258,7 @@ export const translations = {
     shop_now: "MEET THE TEAM",
 
     footer_branding_gallery: "About Us",
-    footer_copyright: "© 2025 BasquetMZ. All rights reserved.",
+    footer_copyright: "© 2026 AppContent. All rights reserved.",
 
     founder_title: "Who's Behind BasquetMZ",
     founder_name: "Casimiro Sidny Mapanguelane Mondlane — \"The Coach 9\"",
@@ -346,7 +346,7 @@ export const translations = {
     placeholderYourName: "Your name...",
     actionSave: "Save",
 
-    // Novas chaves adicionadas
+    // Novas chaves adicionadasƒ
     PublicJogadores: "Players",
     watchShowAllComments: "Show all comments",
     justNow: "Just now",
@@ -362,4 +362,4 @@ export const translations = {
 } as const;
 
 export type Language = keyof typeof translations;
-export type TranslationKey = keyof typeof translations.pt;
+export type FTranslationKey = keyof typeof translations.pt;

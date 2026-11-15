@@ -76,12 +76,10 @@ export const TEAM_CARDS: TeamCardItem[] = [
 
 export const FOOTER_KEYS: TranslationKey[] = [
   'home',
-  'calendar',
-  'nav_teams',
-  'nav_partners',
-  'nav_more',
-  'nav_contact',
-  'nav_store',
+  'Publications',
+  'Players',
+  'Adminnistration',
+  
 ];
 
 export const HERO_IMAGE = "https://picsum.photos/seed/vxg-hero/1600/900";

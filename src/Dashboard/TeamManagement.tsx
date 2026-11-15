@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Plus, Trophy, Loader2, AlertCircle } from 'lucide-react'; 
 import { supabase } from '../lib/supabaseClient';
 import type { Team } from '../types/useTeamForm';
@@ -13,11 +13,11 @@ function normalizeText(text: string): string {
 
 export default function TeamManagement() {
   const [search, setSearch] = useState('');
+  const queryClient = useQueryClient();
 
   const { data: teams = [], isLoading, isError, error } = useQuery({
     queryKey: ['teams'],
     queryFn: async () => {
-      // 1. Vai buscar as equipas
       const { data: teamsData, error: teamsError } = await supabase
         .from('teams')
         .select('*')
@@ -25,16 +25,13 @@ export default function TeamManagement() {
         
       if (teamsError) throw new Error(teamsError.message, { cause: teamsError });
       
-      // 2. CORREÇÃO: Vai buscar APENAS o 'id' e o 'team_id' que sabemos que existem!
       const { data: playersData, error: playersError } = await supabase
         .from('players')
         .select('id, team_id');
 
       if (playersError) throw new Error(playersError.message, { cause: playersError });
 
-      // 3. Associa a contagem a cada equipa correspondente
       return teamsData.map((t) => {
-        // Conta quantos jogadores têm o ID desta equipa
         const playerCount = (playersData || []).filter(p => {
           return String(p.team_id) === String(t.id);
         }).length;
@@ -50,12 +47,36 @@ export default function TeamManagement() {
           logo: t.crest_url,
           initials: t.name.substring(0, 3).toUpperCase(),
           players: playerCount, 
+          is_top_5: t.is_top_5 || false, // <-- ADICIONADO
         };
       }) as Team[];
     },
     staleTime: 1000 * 60 * 10, 
     refetchOnWindowFocus: false,
   });
+
+  const top5Teams = useMemo(() => teams.filter((t) => t.is_top_5), [teams]);
+
+  const handleToggleTop5 = async (e: React.MouseEvent, teamId: string | number, isCurrentlyTop5: boolean) => {
+    e.preventDefault();
+
+    if (!isCurrentlyTop5 && top5Teams.length >= 5) {
+      alert("Já existem 5 equipas em destaque! Desmarque uma antes de adicionar outra.");
+      return;
+    }
+
+    const { error } = await supabase
+      .from('teams')
+      .update({ is_top_5: !isCurrentlyTop5 })
+      .eq('id', teamId);
+
+    if (error) {
+      console.error("Erro ao atualizar status de destaque:", error);
+      alert("Ocorreu um erro ao atualizar a equipa.");
+    } else {
+      queryClient.invalidateQueries({ queryKey: ['teams'] });
+    }
+  };
 
   const filteredTeams = useMemo(() => {
     const normSearch = normalizeText(search);
@@ -87,8 +108,6 @@ export default function TeamManagement() {
     );
   }
 
-  const displayTopTeams = teams.slice(0, 5);
-
   return (
     <div className="min-h-screen bg-slate-50 p-4 font-sans text-slate-900 sm:p-6 md:p-8">
       <div className="mx-auto max-w-6xl space-y-8">
@@ -105,17 +124,22 @@ export default function TeamManagement() {
           </Link>
         </div>
 
-        {displayTopTeams.length > 0 && (
+        {top5Teams.length > 0 && (
           <section>
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-bold text-slate-800">Equipas em Destaque</h2>
             </div>
-            <TopTeamsGrid teams={displayTopTeams} />
+            <TopTeamsGrid teams={top5Teams} onToggleTop5={handleToggleTop5} />
           </section>
         )}
 
         <section>
-          <AllTeamsSection teams={filteredTeams} searchValue={search} onSearchChange={setSearch} />
+          <AllTeamsSection
+            teams={filteredTeams}
+            searchValue={search}
+            onSearchChange={setSearch}
+            onToggleTop5={handleToggleTop5}
+          />
         </section>
       </div>
     </div>

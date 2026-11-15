@@ -13,7 +13,10 @@ const CLOUDINARY_UPLOAD_PRESET = "basket_teams";
 const CLOUDINARY_FOLDER = "teams"; 
 
 const PROVINCES = ["Maputo (Cidade)", "Maputo (Província)", "Gaza", "Inhambane", "Sofala", "Manica", "Tete", "Zambézia", "Nampula", "Cabo Delgado", "Niassa"];
-const DIVISIONS = ["Moçambola", "Divisão de Honra", "1ª Divisão", "2ª Divisão", "3ª Divisão", "Liga Amadora", "Formação"];
+
+// AQUI: Apenas as duas divisões permitidas
+const DIVISIONS = ["1ª Divisão", "2ª Divisão"];
+
 const PRESET_COLORS = [
   { name: "Azul", value: "#2563eb" }, { name: "Vermelho", value: "#dc2626" },
   { name: "Azul Petróleo", value: "#0e7490" }, { name: "Roxo", value: "#7c3aed" },

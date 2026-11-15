@@ -1,5 +1,5 @@
 import React from 'react';
-import { Users } from 'lucide-react';
+import { Info, Phone, } from 'lucide-react';
 import { useTranslate } from '../context/LanguageProvider';
 import { FOOTER_KEYS } from '../data/esportsData';
 
@@ -25,9 +25,8 @@ export const EsportsFooter: React.FC = () => {
         </nav>
 
         <div className="flex items-center gap-4 text-slate-400">
-          <Users size={16} className="cursor-pointer hover:text-white" />
-          <Users size={16} className="cursor-pointer hover:text-white" />
-          <Users size={16} className="cursor-pointer hover:text-white" />
+          <Info size={16} className="cursor-pointer hover:text-white" />
+          <Phone size={16} className="cursor-pointer hover:text-white" />
         </div>
 
         <p className="text-[11px] text-slate-500">

@@ -1,9 +1,54 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslate } from '../context/LanguageProvider';
-import { TEAM_CARDS, CARD_IMAGE_OVERLAY } from '../data/esportsData';
+import { createClient } from '@supabase/supabase-js';
+
+// 1. Configura as tuas credenciais do Supabase
+// (Usa as mesmas chaves que usaste na página dos jogadores)
+const supabaseUrl = 'https://bqguccwgarcenwdfgogv.supabase.co';
+const supabaseKey = 'sb_publishable_NgRtAr6H5EttO4jgYvmH-g_cMbb9tv_';
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+// 2. Cria a interface baseada na estrutura da tua tabela
+export interface Equipa {
+  id: string;
+  name: string;
+  province: string;
+  division: string;
+  founded: number;
+  description: string;
+  header_color: string;
+  crest_url: string;
+}
 
 export const TeamsSection: React.FC = () => {
   const { t } = useTranslate();
+  // Estado para armazenar as equipas vindas da base de dados
+  const [equipas, setEquipas] = useState<Equipa[]>([]);
+
+  // 3. Faz o fetch das equipas ao carregar o componente
+  useEffect(() => {
+    const fetchEquipas = async () => {
+      // ⚠️ SUBSTITUI 'teams' PELO NOME EXATO DA TUA TABELA DE EQUIPAS
+      const { data, error } = await supabase
+        .from('teams')
+        .select('*');
+
+      if (error) {
+        console.error("Erro ao carregar equipas do Supabase:", error.message);
+        return;
+      }
+
+      if (data) {
+        setEquipas(data);
+      }
+    };
+
+    fetchEquipas();
+  }, []);
+
+  // Se o teu 'crest_url' guardar apenas o nome do ficheiro (ex: logo.png) e não o link completo,
+  // define aqui o URL base das imagens do teu bucket. Se já for o link completo, podes ignorar.
+  const BASE_IMAGE_URL = 'https://teu-servidor-de-imagens.com/logos/';
 
   return (
     <section className="relative overflow-hidden bg-cover bg-center py-20">
@@ -30,24 +75,38 @@ export const TeamsSection: React.FC = () => {
         </p>
 
         <div className="mt-10 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {TEAM_CARDS.map((team) => (
-            <button
-              key={team.id}
-              className="group relative flex min-h-32.5 flex-col justify-end overflow-hidden rounded-xl bg-cover bg-center px-4 py-4 text-left transition-all duration-300 hover:-translate-y-1 hover:border-blue-400/50 hover:shadow-[0_0_25px_5px_rgba(56,120,255,0.45)] border-blue-500 shadow-[0_0_20px_4px_rgba(56,120,255,0.4)]"
-              style={{ backgroundImage: `url(${team.media_url})` }}
-            >
-              <div className={CARD_IMAGE_OVERLAY} aria-hidden />
+          
+          {/* 4. Mapear as equipas da base de dados */}
+          {equipas.map((team) => {
+            // Verifica se o crest_url é um link completo ou precisa do base url
+            const imageUrl = team.crest_url?.startsWith('http') 
+              ? team.crest_url 
+              : `${BASE_IMAGE_URL}${team.crest_url}`;
 
-              <span className="relative block">
-                <span className="block wrap-break-word text-sm font-bold text-white line-clamp-1 bwrap-break-word">
-                  {t(team.titleKey)}
+            return (
+              <button
+                key={team.id}
+                className="group relative flex min-h-32.5 flex-col justify-end overflow-hidden rounded-xl bg-cover bg-center px-4 py-4 text-left transition-all duration-300 hover:-translate-y-1 hover:border-blue-400/50 hover:shadow-[0_0_25px_5px_rgba(56,120,255,0.45)] border-blue-500 shadow-[0_0_20px_4px_rgba(56,120,255,0.4)]"
+                style={{ 
+                  backgroundImage: team.crest_url ? `url(${imageUrl})` : 'none',
+                  backgroundColor: team.header_color || '#1e293b' // Usa a cor do header como fallback
+                }}
+              >
+                {/* Overlay escuro para garantir que o texto é legível por cima das imagens */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" aria-hidden />
+
+                <span className="relative block z-10">
+                  <span className="block wrap-break-word text-sm font-bold text-white line-clamp-1 bwrap-break-word">
+                    {team.name}
+                  </span>
+                  <span className="block text-xs text-slate-300 mt-1">
+                    {team.division} {team.province ? `• ${team.province}` : ''}
+                  </span>
                 </span>
-                <span className="block text-xs text-slate-300">
-                  {team.members} {t('members_label')}
-                </span>
-              </span>
-            </button>
-          ))}
+              </button>
+            );
+          })}
+          
         </div>
       </div>
     </section>

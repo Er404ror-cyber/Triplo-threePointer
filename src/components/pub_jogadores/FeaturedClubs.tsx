@@ -30,70 +30,84 @@ export function FeaturedClubs() {
 
         {/* Cabeçalho */}
         <div className="mb-10">
-          <div className="text-[10px] font-bold text-gray-500 tracking-[0.25em] uppercase mb-2">
+          <div className="text-xs font-bold text-red-500 tracking-[0.25em] uppercase mb-2">
             {t('teams_section_eyebrow')}
           </div>
-          <h2 className="text-3xl font-black tracking-tight text-white uppercase">
+          <h2 className="text-3xl md:text-4xl font-black tracking-tight text-white uppercase">
             {t('meet_our_teams')}
           </h2>
         </div>
 
         {/* Loading / Erro */}
         {isLoading && (
-          <div className="flex justify-center py-10">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-700 border-t-[#dc2626]"></div>
+          <div className="flex justify-center py-16">
+            <div className="h-10 w-10 animate-spin rounded-full border-4 border-slate-800 border-t-[#dc2626]"></div>
           </div>
         )}
         
         {error && (
-          <div className="text-red-500 text-sm font-medium py-10 text-center">
+          <div className="text-red-500 text-sm font-semibold py-12 text-center">
             Erro ao carregar equipas.
           </div>
         )}
 
-        {/* Grelha de Clubes */}
+        {/* Grelha de Clubes Redesenhada */}
         {!isLoading && !error && (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-5">
             {featuredClubs.map((club, index) => {
-              // 1. Sigla de recurso: as 3 primeiras letras do campo 'name'
               const sigla = club.name?.substring(0, 3).toUpperCase() || 'XXX';
-              
-              // 2. Cor: tenta usar o 'header_color', se não existir usa a cor da paleta
               const teamColor = club.header_color || fallbackColors[index % fallbackColors.length];
 
               return (
                 <div 
                   key={club.id} 
-                  className="bg-[#0a0a0a] border border-white/5 rounded-2xl p-6 flex flex-col items-center justify-center gap-4 cursor-pointer hover:bg-white/5 transition-colors"
+                  className="group relative bg-gradient-to-b from-[#141414] to-[#0a0a0a] border border-white/10 rounded-2xl p-6 flex flex-col items-center justify-between min-h-[220px] cursor-pointer transition-all duration-300 hover:-translate-y-1.5 hover:border-white/30 hover:shadow-2xl hover:shadow-black/80 overflow-hidden"
                 >
-                  
-                  {/* Se houver crest_url, mostra a imagem. Senão, mostra o bloco colorido */}
-                  {club.crest_url ? (
-                    <img 
-                      src={club.crest_url} 
-                      alt={`Emblema de ${club.name}`} 
-                      className="w-14 h-14 object-contain drop-shadow-md"
-                    />
-                  ) : (
-                    <div 
-                      className="w-14 h-12 rounded-xl flex items-center justify-center text-[13px] font-black text-white shadow-lg"
-                      style={{ backgroundColor: teamColor }} // Usamos style inline para aceitar códigos HEX dinâmicos
-                    >
-                      {sigla}
-                    </div>
-                  )}
+                  {/* Brilho de fundo sutil com a cor da equipa no hover */}
+                  <div 
+                    className="absolute -top-12 -right-12 w-32 h-32 rounded-full opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-20 pointer-events-none"
+                    style={{ backgroundColor: teamColor }}
+                  />
 
-                  {/* Nome da Equipa */}
-                  <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest text-center leading-tight">
-                    {club.name}
-                  </span>
+                  {/* Container da Foto/Emblema em Destaque */}
+                  <div className="relative w-full flex items-center justify-center py-2">
+                    <div className="relative w-20 h-20 md:w-24 md:h-24 flex items-center justify-center rounded-2xl bg-white/[0.04] border border-white/5 p-3 group-hover:bg-white/[0.08] transition-all duration-300">
+                      {club.crest_url ? (
+                        <img 
+                          src={club.crest_url} 
+                          alt={`Emblema de ${club.name}`} 
+                          className="w-full h-full object-contain filter drop-shadow-[0_6px_10px_rgba(0,0,0,0.5)] transform transition-transform duration-300 group-hover:scale-110"
+                        />
+                      ) : (
+                        <div 
+                          className="w-full h-full rounded-xl flex items-center justify-center text-lg font-black text-white shadow-lg tracking-wider"
+                          style={{ backgroundColor: teamColor }}
+                        >
+                          {sigla}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Nome da Equipa em Alto Destaque */}
+                  <div className="w-full text-center mt-3 flex flex-col items-center">
+                    <h3 className="text-sm md:text-base font-extrabold text-white tracking-wide uppercase leading-tight line-clamp-2 transition-colors duration-200 group-hover:text-red-500">
+                      {club.name}
+                    </h3>
+                    
+                    {/* Barra decorativa com a cor da equipa que expande no hover */}
+                    <span 
+                      className="mt-2.5 h-[2px] w-4 rounded-full transition-all duration-300 group-hover:w-12"
+                      style={{ backgroundColor: teamColor }}
+                    />
+                  </div>
                 </div>
               );
             })}
           </div>
         )}
 
-        {/* Banner do World Cup (Mantido inalterado) */}
+        {/* Banner do World Cup */}
         <div className="mt-12 bg-[#0a0a0a] border border-white/5 rounded-[2rem] p-8 lg:p-12 flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
           <div className="flex flex-col items-start gap-4 max-w-xl">
             <div className="flex items-center gap-2">

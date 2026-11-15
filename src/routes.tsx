@@ -19,6 +19,7 @@ import EditPlayer from "./Dashboard/EditPlayer";
 import PlayerDetails from "./Dashboard/PlayerDetails";
 import FullStandings from "./components/dasboard/StandingsTable";
 import PublicJogadores from "./pages/PublicJogadores";
+import EditTeamPage from './Dashboard/EditTeamPage';
 
 export const router = createBrowserRouter([
   // Rotas Públicas (Visitantes)
@@ -50,11 +51,13 @@ export const router = createBrowserRouter([
       { path: "/admin/newplay", element: <Newplay /> },
       { path: "/admin/newpartida", element: <NewPartida /> },
       { path: "/admin/jogadores", element: <T_jogadores /> },
-      // A ROTA FOI REMOVIDA DAQUI
+      {path: 'editplayer/:id', element: <EditPlayer />},
+      { path: "/admin/jogadores/:id", element: <PlayerDetails /> },
       { path: "/admin/equipas", element: <TeamManagement /> },
       { path: "/admin/equipas/:id", element: <TeamDetailsPage /> },
       { path: "/admin/equipas/detalhes/:id", element: <T_Details /> },
       { path: "/admin/publications/:id", element: <PublicationWatch /> },
+      { path: "/admin/editteam/:id", element: <EditTeamPage /> },
       { path: "/admin/editplayer/:id", element: <EditPlayer /> },
       { path: "/admin/jogadores/:id", element: <PlayerDetails /> },
       { path: "/admin/classificacao", element: <FullStandings /> },

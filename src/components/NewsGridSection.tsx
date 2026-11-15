@@ -18,7 +18,7 @@ export const NewsGridSection: React.FC = () => {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {NEWS.map((item) => (
           <a
-            key={item.id}
+            key={item.id} 
             href="#"
             className="group relative flex min-h-50 flex-col justify-end overflow-hidden rounded-2xl bg-cover bg-center p-6 transition-all duration-300 hover:-translate-y-1 hover:border-blue-400/50 hover:shadow-[0_0_25px_5px_rgba(56,120,255,0.45)]"
             style={{ backgroundImage: `url(${item.media_url})` }}

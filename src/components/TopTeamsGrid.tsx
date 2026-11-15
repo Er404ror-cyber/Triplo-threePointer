@@ -1,18 +1,21 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Users, Calendar, MapPin } from 'lucide-react';
-import type { Team } from '../types/useTeamForm'; // CORRETO
+import { Users, Calendar, MapPin, Star } from 'lucide-react';
+import type { Team } from '../types/useTeamForm';
 
 interface TopTeamsGridProps {
   teams: Team[];
+  onToggleTop5: (e: React.MouseEvent, teamId: string | number, isCurrentlyTop5: boolean) => void;
 }
 
-export function TopTeamsGrid({ teams }: TopTeamsGridProps) {
+export function TopTeamsGrid({ teams, onToggleTop5 }: TopTeamsGridProps) {
   const [failedImages, setFailedImages] = useState<Record<string, boolean>>({});
 
   const handleImageError = (id: string) => {
     setFailedImages((prev) => ({ ...prev, [id]: true }));
   };
+
+  
 
   return (
     <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -24,10 +27,9 @@ export function TopTeamsGrid({ teams }: TopTeamsGridProps) {
           <Link
             key={team.id}
             to={`/admin/equipas/${team.id}`}
-            state={{ team }} /* 💡 AQUI: Passamos os dados completos da equipa na navegação */
+            state={{ team }}
             className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all hover:-translate-y-1 hover:shadow-md hover:border-blue-300 cursor-pointer"
           >
-            {/* FAIXA COLORIDA SUPERIOR */}
             <div
               className="relative h-24 w-full px-4 pt-3 flex justify-between items-start"
               style={{ backgroundColor: team.color }}
@@ -40,7 +42,6 @@ export function TopTeamsGrid({ teams }: TopTeamsGridProps) {
               </span>
             </div>
 
-            {/* ESCUDO / LOGO DA EQUIPA */}
             <div className="px-5 -mt-10 flex justify-between items-end">
               <div className="relative h-20 w-20 overflow-hidden rounded-2xl border-4 border-white bg-slate-100 shadow-md shrink-0">
                 {imageUrl && !hasImageFailed ? (
@@ -68,7 +69,6 @@ export function TopTeamsGrid({ teams }: TopTeamsGridProps) {
               )}
             </div>
 
-            {/* DETALHES DA EQUIPA */}
             <div className="p-5 pt-3 flex flex-1 flex-col justify-between">
               <div>
                 <h3 className="text-lg font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
@@ -81,19 +81,20 @@ export function TopTeamsGrid({ teams }: TopTeamsGridProps) {
                 </p>
               </div>
 
-              {/* RODAPÉ */}
+              {/* RODAPÉ — ESTRELA NO LUGAR DAS INICIAIS */}
               <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-3 text-xs">
                 <span className="flex items-center gap-1.5 font-semibold text-slate-700">
                   <Users size={14} className="text-slate-400" />
                   {team.players ? `${team.players} Jogadores` : 'Sem dados'}
                 </span>
 
-                <span
-                  className="rounded-md bg-slate-50 px-2.5 py-1 font-black text-xs uppercase tracking-wider border border-slate-100"
-                  style={{ color: team.color }}
+                <button
+                  onClick={(e) => onToggleTop5(e, team.id, !!team.is_top_5)}
+                  className="p-1.5 rounded-full bg-amber-100 text-amber-500 hover:bg-amber-200 transition-colors"
+                  title="Remover do Destaque"
                 >
-                  {team.initials}
-                </span>
+                  <Star size={16} className="fill-current" />
+                </button>
               </div>
             </div>
           </Link>

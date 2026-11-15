@@ -1,6 +1,5 @@
 import { EsportsHeroSection } from '../components/EsportsHeroSection';
 import { NewsGridSection } from '../components/NewsGridSection';
-import { TeamsSection } from '../components/TeamsSection';
 import { ShopBannerSection } from '../components/ShopBannerSection';
 import { EsportsFooter } from '../components/EsportsFooter';
 import { Header } from '../components/header/header';
@@ -11,8 +10,7 @@ export default function EsportsLandingPage() {
       <Header />
       <EsportsHeroSection />
       <NewsGridSection />
-      <TeamsSection />
-      <ShopBannerSection />
+     <ShopBannerSection />
       <EsportsFooter />
     </div>
   );

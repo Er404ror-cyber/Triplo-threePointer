@@ -80,11 +80,11 @@ export function TopPlayersGrid({ players, onViewPlayer, onMoveTop5 }: TopPlayers
             {isTop5 && onMoveTop5 && (
               <div className="absolute left-2 top-2 flex flex-col gap-0.5">
                 <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onMoveTop5(player.id, 'up');
-                  }}
+  onClick={(e) => {
+    e.stopPropagation(); // Impede que o clique no botão dispare o clique do card
+    onMoveTop5(player.id, 'up');
+  }}
+
                   disabled={isFirst}
                   title="Mover para cima"
                   className={`flex h-5 w-5 items-center justify-center rounded-full border shadow-sm transition ${

@@ -11,6 +11,10 @@ export const Header = () => {
 
   const NAV_LINKS = [
     {
+      label: "home",
+      to: "/",
+    },
+    {
       label: "publications",
       to: "/publications",
     },
@@ -56,39 +60,66 @@ export const Header = () => {
     };
   }, [isMenuOpen]);
 
-  // O React permite devolver múltiplos elementos lado-a-lado usando a tag vazia <> ... </>
   return (
     <>
-      {/* 1. O HEADER VERDADEIRO: Forçado para as bordas absolutas do ecrã */}
+      {/* 1. O HEADER VERDADEIRO */}
       <header
         ref={headerRef}
         className="absolute left-0 top-0 z-50 w-full border-b border-white/10 bg-black/90 shadow-lg"
       >
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-2">
+
+          <Link to="/" className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white">
-              <span className="text-xs text-slate-300">O</span>
+              <svg
+                viewBox="0 0 100 100"
+                className="h-6 w-6"
+                aria-hidden="true"
+              >
+                {/* Corpo da bola laranja */}
+                <circle cx="50" cy="50" r="48" fill="#ea580c" stroke="#000000" strokeWidth="4" />
+                {/* Linha vertical central */}
+                <line x1="50" y1="2" x2="50" y2="98" stroke="#000000" strokeWidth="4" />
+                {/* Linha horizontal central */}
+                <line x1="2" y1="50" x2="98" y2="50" stroke="#000000" strokeWidth="4" />
+                {/* Costura curva esquerda */}
+                <path
+                  d="M 16 16 C 36 34 36 66 16 84"
+                  fill="none"
+                  stroke="#000000"
+                  strokeWidth="4"
+                />
+                {/* Costura curva direita */}
+                <path
+                  d="M 84 16 C 64 34 64 66 84 84"
+                  fill="none"
+                  stroke="#000000"
+                  strokeWidth="4"
+                />
+              </svg>
             </div>
             <span className="text-lg tracking-widest text-slate-300">
               T3P
             </span>
-          </div>
+          </Link>
 
-          {/* Nav desktop */}
+          {/* Nav desktop com animação da direita para a esquerda */}
           <nav className="hidden items-center gap-8 text-xs font-bold tracking-widest text-slate-300 md:flex">
             {NAV_LINKS.map((link) => (
-              <Link
-                key={link.to}
-                to={link.to}
-                className="flex items-center uppercase text-slate-300 hover:text-white transition-colors"
-              >
-                {t(link.label)}
-              </Link>
-            ))}
+ <Link
+  key={link.to}
+  to={link.to}
+  className="relative pb-1 uppercase text-slate-300 transition-colors duration-300 hover:text-white
+             after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-0 after:bg-white 
+             after:transition-all after:duration-300 after:ease-out hover:after:w-full"
+>
+  {t(link.label)}
+</Link>
+))}
           </nav>
 
           <div className="flex items-center gap-6 text-slate-300">
-            <div className="hidden items-center gap-6 md:flex">
+            <div className="hidden items-center gap-6 md:flex ">
               <LanguageSwitcher />
               <Info size={16} className="cursor-pointer hover:text-white transition-colors" />
               <Phone size={16} className="cursor-pointer hover:text-white transition-colors" />
@@ -109,15 +140,17 @@ export const Header = () => {
         {isMenuOpen && (
           <nav className="absolute left-0 top-full w-full flex flex-col gap-2 border-b border-white/10 bg-black/95 px-6 py-5 shadow-xl md:hidden">
             {NAV_LINKS.map((link) => (
-              <Link
-                key={link.to}
-                to={link.to}
-                onClick={() => setIsMenuOpen(false)}
-                className="rounded-lg px-3 py-4 text-sm font-bold uppercase tracking-widest text-slate-300 hover:bg-white/10 hover:text-white transition-colors"
-              >
-                {t(link.label)}
-              </Link>
-            ))}
+  <Link
+  key={link.to}
+  to={link.to}
+  onClick={() => setIsMenuOpen(false)}
+  className="relative pb-2 pt-2 text-sm font-bold uppercase tracking-widest text-slate-300 transition-colors duration-300 hover:text-white
+             after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-0 after:bg-white 
+             after:transition-all after:duration-300 after:ease-out hover:after:w-full"
+>
+  {t(link.label)}
+</Link>
+))}
 
             <div className="mt-3 flex items-center gap-4 border-t border-white/10 px-3 pt-5 text-slate-300">
               <LanguageSwitcher />
@@ -134,7 +167,7 @@ export const Header = () => {
         )}
       </header>
 
-      {/* 2. O ESPAÇADOR FANTASMA: Ocupa os 74px de altura do Header verdadeiro para não tapar o resto do site */}
+      {/* 2. O ESPAÇADOR FANTASMA */}
       <div className="h-[74px] w-full flex-shrink-0" aria-hidden="true"></div>
     </>
   );
