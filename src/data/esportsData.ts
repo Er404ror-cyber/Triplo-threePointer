@@ -76,9 +76,9 @@ export const TEAM_CARDS: TeamCardItem[] = [
 
 export const FOOTER_KEYS: TranslationKey[] = [
   'home',
-  'Publications',
-  'Players',
-  'Adminnistration',
+ 'publications',
+  'jogadores', // ou 'players' (verifique qual destas duas existe no seu ficheiro de tradução)
+  'admin',     // no lugar de 'Adminnistration'
   
 ];
 

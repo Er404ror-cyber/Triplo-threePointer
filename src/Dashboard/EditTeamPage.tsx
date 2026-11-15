@@ -254,7 +254,6 @@ function EditFormWrapper({ id, initialData }: { id: string; initialData: any }) 
       <TeamForm
         formData={{
           ...formData,
-          header_color: headerColor,
           headerColor: headerColor,
         }}
         actions={actions}

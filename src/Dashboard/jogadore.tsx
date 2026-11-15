@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { 
   Search, 
   Plus, 
@@ -11,6 +11,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Header } from '../components/header/header';
 import { PlayersTable, Top5Cards, type Player } from '../components/PlayersTable';
 
@@ -25,46 +26,35 @@ function normalizeText(text: string): string {
 }
 
 export default function AdminJogadores() {
-  const [players, setPlayers] = useState<Player[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
 
   // ==========================================================================
-  // 1. CARREGAR JOGADORES REAIS DO SUPABASE
+  // 1. CARREGAR JOGADORES REAIS DO SUPABASE (COM CACHE DO REACT QUERY)
   // ==========================================================================
-  useEffect(() => {
-    let isMounted = true;
+  const { data: players = [], isLoading: loading } = useQuery<Player[]>({
+    queryKey: ['players-list'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('players')
+        .select('*');
 
-    async function loadData() {
-      try {
-        const { data, error } = await supabase
-          .from('players')
-          .select('*');
-
-        if (error) {
-          console.error('Erro detalhado do Supabase:', error);
-          throw error;
-        }
-
-        if (isMounted) {
-          console.log('Jogadores carregados com sucesso:', data);
-          setPlayers(data || []);
-        }
-      } catch (err) {
-        console.error('Falha na requisição:', err);
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
+      if (error) {
+        console.error('Erro detalhado do Supabase:', error);
+        throw error;
       }
-    }
 
-    loadData();
+      return data || [];
+    },
+    staleTime: 1000 * 60 * 10, // Mantém em cache por 10 minutos sem recarregar
+    gcTime: 1000 * 60 * 30,    // Guarda na memória por 30 minutos
+    refetchOnWindowFocus: false,
+  });
 
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  // Atualiza a lista diretamente no cache do React Query
+  const setPlayers = (updater: (prev: Player[]) => Player[]) => {
+    queryClient.setQueryData<Player[]>(['players-list'], (old) => updater(old || []));
+  };
 
   // ==========================================================================
   // 2. ATUALIZAR STATUS (ATIVO / INATIVO) NO SUPABASE
@@ -109,7 +99,7 @@ export default function AdminJogadores() {
     if (error) {
       console.error('Erro ao remover jogador:', error);
       alert('Erro ao remover da base de dados.');
-      setPlayers(prevPlayers);
+      setPlayers(() => prevPlayers);
     }
   };
 
@@ -135,70 +125,6 @@ export default function AdminJogadores() {
       );
     }
   };
-
-  // ==========================================================================
-// 5. TROCAR POSIÇÃO DE UM JOGADOR NO TOP 5 (MOVER PARA CIMA/BAIXO)
-// ==========================================================================
-  const handleMoveTop5 = async (playerId: string | number, direction: 'up' | 'down') => {
-    const player = players.find((p) => p.id === playerId);
-    if (!player) return;
-  const cat = (player.category || '').trim().toLowerCase();
-  const isSenior = cat === 'sénior' || cat === 'senior';
-
-  const group = players
-    .filter((p) => {
-      const pCat = (p.category || '').trim().toLowerCase();
-      const matchCat = isSenior
-        ? (pCat === 'sénior' || pCat === 'senior')
-        : (pCat === 'juvenil' || pCat === 'júnior' || pCat === 'junior');
-      return p.is_top_5 && matchCat;
-    })
-    .sort((a, b) => (a.top_5_order ?? 9999) - (b.top_5_order ?? 9999));
-
-  const currentIndex = group.findIndex((p) => p.id === playerId);
-  if (currentIndex === -1) return;
-
-  const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
-  if (targetIndex < 0 || targetIndex >= group.length) return;
-
-  const current = group[currentIndex];
-  const target = group[targetIndex];
-
-  const currentOrder = current.top_5_order ?? currentIndex + 1;
-  const targetOrder = target.top_5_order ?? targetIndex + 1;
-
-  // Atualiza localmente primeiro (otimista)
-  setPlayers((prev) =>
-    prev.map((p) => {
-      if (p.id === current.id) return { ...p, top_5_order: targetOrder };
-      if (p.id === target.id) return { ...p, top_5_order: currentOrder };
-      return p;
-    })
-  );
-
-  const { error: error1 } = await supabase
-    .from('players')
-    .update({ top_5_order: targetOrder })
-    .eq('id', current.id);
-
-  const { error: error2 } = await supabase
-    .from('players')
-    .update({ top_5_order: currentOrder })
-    .eq('id', target.id);
-
-  if (error1 || error2) {
-    console.error('Erro ao trocar posição:', error1 || error2);
-    alert('Não foi possível salvar a nova posição.');
-    // Reverte em caso de erro
-    setPlayers((prev) =>
-      prev.map((p) => {
-        if (p.id === current.id) return { ...p, top_5_order: currentOrder };
-        if (p.id === target.id) return { ...p, top_5_order: targetOrder };
-        return p;
-      })
-    );
-  }
-};
 
   // Filtragem da busca
   const filteredPlayers = useMemo(() => {

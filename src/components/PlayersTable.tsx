@@ -1,9 +1,7 @@
-import React from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { 
   Star, 
   Trash2, 
-  User, 
   CheckCircle2, 
   XCircle, 
   ChevronUp, 

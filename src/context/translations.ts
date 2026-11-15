@@ -125,6 +125,18 @@ export const translations = {
     match_points_label: "PONTOS DA PARTIDA",
 
     watchUpNext: "A seguir",
+
+    hero_top_teams_label: "Equipas em Destaque",
+hero_teams_error: "Erro ao carregar equipas.",
+hero_teams_empty: "Nenhuma equipa encontrada.",
+hero_points_unit: "pts",
+hero_top_title: "Destaques da Temporada",
+hero_top_description: "Os melhores atletas e clubes em competição.",
+hero_top_players_label: "Jogadores em Destaque",
+hero_error: "Erro ao carregar destaques.",
+hero_empty: "Nenhum destaque disponível.",
+hero_image_placeholder: "Sem imagem",
+hero_best_player: "Melhor Jogador",
     
     // Tipos de publicação
     typeVideo: "Vídeo",
@@ -358,8 +370,20 @@ export const translations = {
     noResults: "No results found.",
     recentHighlights: "Recent Highlights",
     exploreAll: "Explore All",
+
+    hero_top_teams_label: "Top Teams",
+hero_teams_error: "Error loading teams.",
+hero_teams_empty: "No teams found.",
+hero_points_unit: "pts",
+hero_top_title: "Season Highlights",
+hero_top_description: "Top athletes and clubs in the league.",
+hero_top_players_label: "Top Players",
+hero_error: "Error loading highlights.",
+hero_empty: "No highlights available.",
+hero_image_placeholder: "No image",
+hero_best_player: "Best Player",
   },
 } as const;
 
 export type Language = keyof typeof translations;
-export type FTranslationKey = keyof typeof translations.pt;
+export type TranslationKey = keyof typeof translations.pt;
