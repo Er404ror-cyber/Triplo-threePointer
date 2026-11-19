@@ -1,4 +1,4 @@
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Users } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../lib/supabaseClient'; 
@@ -7,7 +7,6 @@ import { TeamDetailsCard } from '../components/TeamDetailsCard';
 import { TeamNotFound } from '../components/TeamNotFound';
 import { TopPlayersGrid } from '../components/TopPlayersGrid'; 
 
-// Adicionados 'id' e 'top_5_order' ao molde temporário para resolver os erros do TypeScript
 type SortablePlayer = {
   id: string | number;
   top_5_order?: number;
@@ -17,27 +16,34 @@ type SortablePlayer = {
 
 export default function T_Details() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
 
   const { data: teamData, isLoading, error, refetch } = useQuery({
     queryKey: ['team-details-page', id],
     queryFn: async () => {
       if (!id) throw new Error("ID da equipa não encontrado");
 
-      const { data: team, error: teamError } = await supabase
-        .from('teams')
-        .select('*')
-        .eq('id', id)
-        .single();
+      const [
+        { data: team, error: teamError },
+        { data: playersBySnake }
+      ] = await Promise.all([
+        supabase
+          .from('teams')
+          .select('*')
+          .eq('id', id)
+          .single(),
+        supabase
+          .from('players')
+          .select('*')
+          .eq('team_id', id)
+      ]);
       
       if (teamError) throw new Error(teamError.message);
       if (!team) return null;
 
-      let { data: players } = await supabase
-        .from('players')
-        .select('*')
-        .eq('team_id', id);
+      let players = playersBySnake || [];
 
-      if (!players || players.length === 0) {
+      if (players.length === 0) {
         const { data: playersAlt } = await supabase
           .from('players')
           .select('*')
@@ -48,10 +54,13 @@ export default function T_Details() {
 
       return {
         ...team,
-        players: players
+        players
       };
     },
-    enabled: !!id
+    enabled: !!id,
+    staleTime: 1000 * 60 * 10,
+    gcTime: 1000 * 60 * 30,
+    refetchOnWindowFocus: false,
   });
 
   if (isLoading) {
@@ -66,7 +75,6 @@ export default function T_Details() {
     return <TeamNotFound />;
   }
 
-  // 💡 Anotamos rawPlayers com SortablePlayer[] para o TypeScript conhecer as propriedades
   const rawPlayers: SortablePlayer[] = teamData.players || [];
 
   const top5Players = rawPlayers
@@ -88,11 +96,9 @@ export default function T_Details() {
     const current = top5Players[currentIndex];
     const target = top5Players[targetIndex];
 
-    // Se algum dos dois ainda não tem top_5_order definido, atribui com base na posição atual
     const currentOrder = current.top_5_order ?? currentIndex + 1;
     const targetOrder = target.top_5_order ?? targetIndex + 1;
 
-    // Troca os valores no Supabase
     const { error: error1 } = await supabase
       .from('players')
       .update({ top_5_order: targetOrder })
@@ -112,10 +118,6 @@ export default function T_Details() {
     refetch();
   };
 
-  // 💡 Evita o erro de "variável declarada mas nunca lida" enquanto não ligar a função
-  void handleMoveTop5;
-
-  // Clonamos a lista e usamos o molde temporário (SortablePlayer) para agradar ao TypeScript
   const jogadoresOrdenados = [...teamPlayers].sort((a, b) => {
     const playerA = a as SortablePlayer;
     const playerB = b as SortablePlayer;
@@ -134,6 +136,30 @@ export default function T_Details() {
   const teamDataForCard = {
     ...teamData,
     players: teamPlayers.length
+  };
+
+  // Identifica o card clicado dentro do TopPlayersGrid e navega para os detalhes do jogador
+  const handleGridClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement;
+    // Ignora cliques em botões internos (como as setas de reordenar Top 5) ou links existentes
+    if (target.closest('button') || target.closest('a')) return;
+
+    const cardWithId = target.closest('[data-player-id]') as HTMLElement | null;
+    if (cardWithId?.dataset.playerId) {
+      navigate(`/admin/jogadores/${cardWithId.dataset.playerId}`);
+      return;
+    }
+
+    // Fallback: identifica o card pela posição na grelha
+    const gridContainer = e.currentTarget.firstElementChild;
+    if (!gridContainer) return;
+
+    const cards = Array.from(gridContainer.children);
+    const clickedCardIndex = cards.findIndex((card) => card.contains(target));
+
+    if (clickedCardIndex !== -1 && jogadoresOrdenados[clickedCardIndex]) {
+      navigate(`/admin/jogadores/${jogadoresOrdenados[clickedCardIndex].id}`);
+    }
   };
 
   return (
@@ -156,7 +182,7 @@ export default function T_Details() {
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-bold text-slate-800">Plantel da Equipa</h2>
             <Link
-              to="/admin/newplay"
+              to={`/admin/newplay?teamId=${id}`}
               className="text-sm font-semibold text-blue-600 hover:text-blue-700"
             >
               + Adicionar Jogador
@@ -164,7 +190,12 @@ export default function T_Details() {
           </div>
 
           {jogadoresOrdenados.length > 0 ? (
-            <TopPlayersGrid players={jogadoresOrdenados as any} />
+            <div onClick={handleGridClick} className="cursor-pointer">
+              <TopPlayersGrid 
+                players={jogadoresOrdenados as any} 
+                onMoveTop5={handleMoveTop5} 
+              />
+            </div>
           ) : (
             <div className="flex flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white py-12 text-center shadow-sm">
               <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-400">

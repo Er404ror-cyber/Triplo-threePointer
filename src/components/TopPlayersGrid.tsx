@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { Shield, Star, ChevronUp, ChevronDown } from 'lucide-react';
 
 export interface Player {
@@ -34,8 +35,18 @@ const getInitials = (name: string) => {
 };
 
 export function TopPlayersGrid({ players, onViewPlayer, onMoveTop5 }: TopPlayersGridProps) {
+  const navigate = useNavigate();
+
   // Índices dentro do subconjunto Top 5, para saber quem é o primeiro/último
   const top5Ids = players.filter((p) => p.is_top_5 === true).map((p) => p.id);
+
+  const handleCardClick = (playerId: string | number) => {
+    if (onViewPlayer) {
+      onViewPlayer(playerId);
+    } else {
+      navigate(`/admin/jogadores/${playerId}`);
+    }
+  };
 
   return (
     <div className="flex flex-col gap-2.5 sm:grid sm:grid-cols-3 sm:gap-4 lg:grid-cols-5">
@@ -49,7 +60,18 @@ export function TopPlayersGrid({ players, onViewPlayer, onMoveTop5 }: TopPlayers
           player.category ||
           'Sénior';
 
-        const provinciasProibidas = ['tete', 'maputo', 'sofala', 'manica', 'gaza', 'inhambane', 'zambézia', 'nampula', 'cabo delgado', 'niassa', 'tete'];
+        const provinciasProibidas = [
+          'tete',
+          'maputo',
+          'sofala',
+          'manica',
+          'gaza',
+          'inhambane',
+          'zambézia',
+          'nampula',
+          'cabo delgado',
+          'niassa',
+        ];
 
         if (provinciasProibidas.includes(rawCategory.toLowerCase().trim())) {
           rawCategory = 'Sénior';
@@ -64,14 +86,19 @@ export function TopPlayersGrid({ players, onViewPlayer, onMoveTop5 }: TopPlayers
         return (
           <div
             key={player.id}
-            className={`group relative rounded-2xl border p-3 shadow-sm transition-all hover:-translate-y-1 w-full min-w-0 ${
+            data-player-id={player.id}
+            onClick={() => handleCardClick(player.id)}
+            className={`group relative cursor-pointer rounded-2xl border p-3 shadow-sm transition-all hover:-translate-y-1 w-full min-w-0 ${
               isTop5
                 ? 'bg-gradient-to-b from-amber-50/80 via-white to-amber-50/30 border-amber-300 shadow-amber-100 hover:border-amber-400 hover:shadow-md'
                 : 'bg-white border-slate-200/80 hover:border-blue-300 hover:shadow-md'
             }`}
           >
             {isTop5 && (
-              <div className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-amber-400 text-white shadow-sm" title="Destaque Top 5">
+              <div
+                className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full bg-amber-400 text-white shadow-sm"
+                title="Destaque Top 5"
+              >
                 <Star size={11} fill="currentColor" />
               </div>
             )}
@@ -80,11 +107,11 @@ export function TopPlayersGrid({ players, onViewPlayer, onMoveTop5 }: TopPlayers
             {isTop5 && onMoveTop5 && (
               <div className="absolute left-2 top-2 flex flex-col gap-0.5">
                 <button
-  onClick={(e) => {
-    e.stopPropagation(); // Impede que o clique no botão dispare o clique do card
-    onMoveTop5(player.id, 'up');
-  }}
-
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation(); // Impede que o clique no botão dispare o clique do card
+                    onMoveTop5(player.id, 'up');
+                  }}
                   disabled={isFirst}
                   title="Mover para cima"
                   className={`flex h-5 w-5 items-center justify-center rounded-full border shadow-sm transition ${
@@ -114,13 +141,14 @@ export function TopPlayersGrid({ players, onViewPlayer, onMoveTop5 }: TopPlayers
               </div>
             )}
 
-            <div
-              onClick={() => onViewPlayer && onViewPlayer(player.id)}
-              className="flex cursor-pointer flex-row items-center gap-3 text-left sm:flex-col sm:items-center sm:text-center sm:gap-0"
-            >
+            <div className="flex flex-row items-center gap-3 text-left sm:flex-col sm:items-center sm:text-center sm:gap-0">
               <div className="mb-0 shrink-0 sm:mb-2">
                 {player.photo ? (
-                  <img src={player.photo} alt={player.name} className="h-10 w-10 rounded-full object-cover" />
+                  <img
+                    src={player.photo}
+                    alt={player.name}
+                    className="h-10 w-10 rounded-full object-cover"
+                  />
                 ) : (
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-200 text-sm font-bold text-slate-700">
                     {getInitials(player.name)}
@@ -129,9 +157,13 @@ export function TopPlayersGrid({ players, onViewPlayer, onMoveTop5 }: TopPlayers
               </div>
 
               <div className="min-w-0 flex-1 sm:w-full">
-                <h3 className={`text-xs sm:text-sm font-bold transition-colors truncate w-full ${
-                  isTop5 ? 'text-amber-900 group-hover:text-amber-600' : 'text-slate-900 group-hover:text-blue-600'
-                }`}>
+                <h3
+                  className={`text-xs sm:text-sm font-bold transition-colors truncate w-full ${
+                    isTop5
+                      ? 'text-amber-900 group-hover:text-amber-600'
+                      : 'text-slate-900 group-hover:text-blue-600'
+                  }`}
+                >
                   {player.name}
                 </h3>
                 <p className="text-[10px] sm:text-xs font-medium text-slate-400 mt-0.5">
@@ -140,7 +172,10 @@ export function TopPlayersGrid({ players, onViewPlayer, onMoveTop5 }: TopPlayers
 
                 <div className="mt-2 flex w-full items-center justify-between gap-2 border-t border-slate-100 pt-2 text-[10px] text-slate-500 sm:mt-3 sm:pt-2 sm:text-[11px]">
                   <span className="flex min-w-0 items-center gap-1 truncate font-medium text-slate-700">
-                    <Shield size={11} className={isTop5 ? "text-amber-500 shrink-0" : "text-blue-500 shrink-0"} />
+                    <Shield
+                      size={11}
+                      className={isTop5 ? 'text-amber-500 shrink-0' : 'text-blue-500 shrink-0'}
+                    />
                     <span className="truncate">{player.team}</span>
                   </span>
 
